@@ -25,10 +25,39 @@ export interface StorageResult {
   error?: 'unavailable' | 'capacity' | 'invalid';
 }
 
+export type StorageCategory =
+  'settings' | 'attempts' | 'sessions' | 'mistake patterns' | 'active session';
+
+export interface StorageRecoveryNotice {
+  category: StorageCategory | 'browser storage';
+  message: string;
+}
+
+const recoveryNotices = new Map<StorageRecoveryNotice['category'], string>();
+
+function recordRecoveryNotice(
+  category: StorageRecoveryNotice['category'],
+  message: string,
+) {
+  recoveryNotices.set(category, message);
+}
+
+export function getStorageRecoveryNotices(): StorageRecoveryNotice[] {
+  return Array.from(recoveryNotices, ([category, message]) => ({ category, message }));
+}
+
+export function clearStorageRecoveryNotices() {
+  recoveryNotices.clear();
+}
+
 function storage(): Storage | null {
   try {
     return typeof window === 'undefined' ? null : window.localStorage;
   } catch {
+    recordRecoveryNotice(
+      'browser storage',
+      'This browser is not allowing saved progress right now. You can still practice, but keep this tab open.',
+    );
     return null;
   }
 }
@@ -44,22 +73,55 @@ function write(key: string, value: unknown): StorageResult {
       error instanceof DOMException &&
       (error.name === 'QuotaExceededError' ||
         error.name === 'NS_ERROR_DOM_QUOTA_REACHED');
-    return { ok: false, error: capacity ? 'capacity' : 'unavailable' };
+    const reason = capacity ? 'capacity' : 'unavailable';
+    recordRecoveryNotice(
+      'browser storage',
+      capacity
+        ? 'This browser is out of space for Math Quest progress. Your current screen still works, but new progress may not be saved.'
+        : 'This browser is not allowing saved progress right now. You can still practice, but keep this tab open.',
+    );
+    return { ok: false, error: reason };
   }
 }
 
-function read<T>(key: string, validate: (value: unknown) => value is T, fallback: T): T {
+function read<T>(
+  key: string,
+  category: StorageCategory,
+  validate: (value: unknown) => value is T,
+  fallback: T,
+): T {
   const target = storage();
   if (!target) return fallback;
-  const raw = target.getItem(key);
+  let raw: string | null;
+  try {
+    raw = target.getItem(key);
+  } catch {
+    recordRecoveryNotice(
+      'browser storage',
+      'This browser is not allowing saved progress right now. You can still practice, but keep this tab open.',
+    );
+    return fallback;
+  }
   if (raw === null) return fallback;
   try {
     const value: unknown = JSON.parse(raw);
     if (validate(value)) return value;
   } catch {
-    // Repair only this category below.
+    // Remove only this invalid category below.
   }
-  target.removeItem(key);
+  try {
+    target.removeItem(key);
+  } catch {
+    recordRecoveryNotice(
+      'browser storage',
+      'This browser is not allowing saved progress right now. You can still practice, but keep this tab open.',
+    );
+    return fallback;
+  }
+  recordRecoveryNotice(
+    category,
+    `We found a problem with saved ${category}, so we reset only that part. Your other Math Quest data is still here.`,
+  );
   return fallback;
 }
 
@@ -82,8 +144,10 @@ export function isSettings(value: unknown): value is AppSettings {
     Array.isArray(item.defaultOperations) &&
     item.defaultOperations.length > 0 &&
     item.defaultOperations.every(isOperation) &&
+    new Set(item.defaultOperations).size === item.defaultOperations.length &&
     Number.isInteger(item.masteryThreshold) &&
-    (item.masteryThreshold ?? 0) >= 1
+    (item.masteryThreshold ?? 0) >= 1 &&
+    (item.masteryThreshold ?? 11) <= 10
   );
 }
 
@@ -94,14 +158,31 @@ function isAttempt(value: unknown): value is PracticeAttempt {
     typeof item.id === 'string' &&
     typeof item.questionId === 'string' &&
     isOperation(item.operation) &&
-    Number.isFinite(item.correctAnswer) &&
-    Number.isFinite(item.selectedAnswer) &&
+    Number.isInteger(item.firstOperand) &&
+    (item.firstOperand ?? -1) >= 0 &&
+    Number.isInteger(item.secondOperand) &&
+    (item.secondOperand ?? -1) >= 0 &&
+    Number.isInteger(item.correctAnswer) &&
+    (item.correctAnswer ?? -1) >= 0 &&
+    Number.isInteger(item.selectedAnswer) &&
+    (item.selectedAnswer ?? -1) >= 0 &&
     typeof item.selfReportedCorrect === 'boolean' &&
     [1, 2, 3, 4].includes(item.difficulty ?? 0) &&
     (item.source === 'regular' || item.source === 'mistake-review') &&
     (item.source === 'regular' || typeof item.mistakePatternId === 'string') &&
     typeof item.sessionId === 'string' &&
-    typeof item.attemptedAt === 'string'
+    typeof item.attemptedAt === 'string' &&
+    !Number.isNaN(Date.parse(item.attemptedAt)) &&
+    ((item.operation === 'addition' &&
+      item.firstOperand! + item.secondOperand! === item.correctAnswer) ||
+      (item.operation === 'subtraction' &&
+        item.firstOperand! >= item.secondOperand! &&
+        item.firstOperand! - item.secondOperand! === item.correctAnswer) ||
+      (item.operation === 'multiplication' &&
+        item.firstOperand! * item.secondOperand! === item.correctAnswer) ||
+      (item.operation === 'division' &&
+        item.secondOperand! > 0 &&
+        item.firstOperand! / item.secondOperand! === item.correctAnswer))
   );
 }
 
@@ -111,6 +192,7 @@ function isSession(value: unknown): value is PracticeSession {
   return (
     typeof item.id === 'string' &&
     typeof item.startedAt === 'string' &&
+    !Number.isNaN(Date.parse(item.startedAt)) &&
     Array.isArray(item.operations) &&
     item.operations.length > 0 &&
     item.operations.every(isOperation) &&
@@ -118,11 +200,20 @@ function isSession(value: unknown): value is PracticeSession {
     [5, 10, 20, 'continuous'].includes(item.sessionLength ?? 0) &&
     (item.reviewMode === 'regular' || item.reviewMode === 'mistake-review') &&
     Number.isInteger(item.attempted) &&
+    (item.attempted ?? -1) >= 0 &&
     Number.isInteger(item.correct) &&
+    (item.correct ?? -1) >= 0 &&
     Number.isInteger(item.incorrect) &&
+    (item.incorrect ?? -1) >= 0 &&
     Number.isInteger(item.mistakeReviewCount) &&
     (item.mistakeReviewCount ?? -1) >= 0 &&
-    typeof item.isActive === 'boolean'
+    (item.mistakeReviewCount ?? 1) <= (item.attempted ?? 0) &&
+    (item.correct ?? 0) + (item.incorrect ?? 0) === item.attempted &&
+    typeof item.isActive === 'boolean' &&
+    (item.completedAt === undefined ||
+      (typeof item.completedAt === 'string' &&
+        !Number.isNaN(Date.parse(item.completedAt)))) &&
+    (item.isActive || typeof item.completedAt === 'string')
   );
 }
 
@@ -273,6 +364,12 @@ export function initializeStorage(): StorageResult {
       error instanceof DOMException &&
       (error.name === 'QuotaExceededError' ||
         error.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+    recordRecoveryNotice(
+      'browser storage',
+      capacity
+        ? 'This browser is out of space for Math Quest progress. Your current screen still works, but new progress may not be saved.'
+        : 'This browser is not allowing saved progress right now. You can still practice, but keep this tab open.',
+    );
     return { ok: false, error: capacity ? 'capacity' : 'unavailable' };
   }
   return { ok: true };
@@ -280,7 +377,7 @@ export function initializeStorage(): StorageResult {
 
 export function loadSettings(): AppSettings {
   initializeStorage();
-  return read(STORAGE_KEYS.settings, isSettings, { ...DEFAULT_SETTINGS });
+  return read(STORAGE_KEYS.settings, 'settings', isSettings, { ...DEFAULT_SETTINGS });
 }
 
 export function saveSettings(settings: AppSettings): StorageResult {
@@ -294,6 +391,7 @@ export function loadAttempts(): PracticeAttempt[] {
   initializeStorage();
   return read(
     STORAGE_KEYS.attempts,
+    'attempts',
     (value): value is PracticeAttempt[] => Array.isArray(value) && value.every(isAttempt),
     [],
   );
@@ -308,6 +406,7 @@ export function loadSessions(): PracticeSession[] {
   initializeStorage();
   return read(
     STORAGE_KEYS.sessions,
+    'sessions',
     (value): value is PracticeSession[] => Array.isArray(value) && value.every(isSession),
     [],
   );
@@ -323,6 +422,7 @@ export function loadActiveSession(): ActivePracticeSession | null {
   initializeStorage();
   return read(
     STORAGE_KEYS.activeSession,
+    'active session',
     isActivePracticeSession,
     null as ActivePracticeSession | null,
   );
@@ -338,18 +438,32 @@ export function saveActiveSession(activeSession: ActivePracticeSession): Storage
 export function clearActiveSession(): StorageResult {
   const target = storage();
   if (!target) return { ok: false, error: 'unavailable' };
-  target.removeItem(STORAGE_KEYS.activeSession);
-  return { ok: true };
+  try {
+    target.removeItem(STORAGE_KEYS.activeSession);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'unavailable' };
+  }
 }
 
 export function loadMistakePatterns(): MistakePattern[] {
   initializeStorage();
   return read(
     STORAGE_KEYS.mistakePatterns,
+    'mistake patterns',
     (value): value is MistakePattern[] =>
       Array.isArray(value) && value.every(isMistakePattern),
     [],
   );
+}
+
+export function validateStoredData(): StorageRecoveryNotice[] {
+  loadSettings();
+  loadAttempts();
+  loadSessions();
+  loadMistakePatterns();
+  loadActiveSession();
+  return getStorageRecoveryNotices();
 }
 
 export function saveMistakePatterns(patterns: readonly MistakePattern[]): StorageResult {
@@ -360,19 +474,27 @@ export function saveMistakePatterns(patterns: readonly MistakePattern[]): Storag
 export function clearPracticeHistory(): StorageResult {
   const target = storage();
   if (!target) return { ok: false, error: 'unavailable' };
-  [
-    STORAGE_KEYS.attempts,
-    STORAGE_KEYS.sessions,
-    STORAGE_KEYS.statistics,
-    STORAGE_KEYS.mistakePatterns,
-  ].forEach((key) => target.removeItem(key));
-  return { ok: true };
+  try {
+    [
+      STORAGE_KEYS.attempts,
+      STORAGE_KEYS.sessions,
+      STORAGE_KEYS.statistics,
+      STORAGE_KEYS.mistakePatterns,
+    ].forEach((key) => target.removeItem(key));
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'unavailable' };
+  }
 }
 
 export function clearAllApplicationData(): StorageResult {
   const target = storage();
   if (!target) return { ok: false, error: 'unavailable' };
-  Object.values(STORAGE_KEYS).forEach((key) => target.removeItem(key));
-  initializeStorage();
-  return { ok: true };
+  try {
+    Object.values(STORAGE_KEYS).forEach((key) => target.removeItem(key));
+    initializeStorage();
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'unavailable' };
+  }
 }

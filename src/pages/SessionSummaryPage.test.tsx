@@ -52,8 +52,17 @@ describe('SessionSummaryPage', () => {
     expect(screen.getByLabelText('0% accuracy')).toBeInTheDocument();
   });
 
-  it('redirects when completed session data is unavailable', () => {
+  it('shows friendly recovery when completed session data is unavailable', () => {
     renderSummary();
-    expect(screen.getByText('Setup page')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: 'We could not find that session summary',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/saved statistics are still safe/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Start a new session' })).toHaveAttribute(
+      'href',
+      '/practice/setup',
+    );
   });
 });

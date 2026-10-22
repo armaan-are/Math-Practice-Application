@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { DifficultyLevel, MathOperation } from '../types';
 import {
   generateAddition,
@@ -7,6 +7,7 @@ import {
   generateQuestion,
   generateSubtraction,
   validateQuestionArithmetic,
+  validateQuestion,
 } from './questionGenerator';
 
 const levels: DifficultyLevel[] = [1, 2, 3, 4];
@@ -82,5 +83,52 @@ describe('question generation', () => {
     }
     expect(seen).toEqual(new Set(operations));
     expect(() => generateQuestion([], 1)).toThrow(/at least one operation/i);
+  });
+
+  it('retries invalid generation up to a maximum and returns a valid fallback', () => {
+    const generateBase = vi.fn().mockReturnValue({
+      id: 'invalid',
+      operation: 'division',
+      firstOperand: 5,
+      secondOperand: 0,
+      displayText: '5 ÷ 0 = ?',
+      correctAnswer: Number.POSITIVE_INFINITY,
+      difficulty: 2,
+      source: 'regular',
+    });
+    const logger = { error: vi.fn() };
+
+    const question = generateQuestion('division', 2, {
+      generateBase,
+      logger,
+      maxAttempts: 3,
+    });
+
+    expect(generateBase).toHaveBeenCalledTimes(3);
+    expect(validateQuestion(question)).toBe(true);
+    expect(question).toMatchObject({
+      operation: 'division',
+      difficulty: 2,
+      firstOperand: 56,
+      secondOperand: 7,
+      correctAnswer: 8,
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('safe division fallback after 3 invalid attempts'),
+    );
+  });
+
+  it('recovers when a generator throws instead of exposing the error', () => {
+    const logger = { error: vi.fn() };
+    expect(() =>
+      generateQuestion('addition', 1, {
+        generateBase: () => {
+          throw new Error('simulated generator failure');
+        },
+        logger,
+        maxAttempts: 2,
+      }),
+    ).not.toThrow();
+    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 });

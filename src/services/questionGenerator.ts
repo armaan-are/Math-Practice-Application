@@ -1,9 +1,21 @@
 import type { DifficultyLevel, MathOperation, Question } from '../types';
 import { createId } from '../utils/ids';
 import { randomInteger } from '../utils/random';
+import { shuffle } from '../utils/shuffle';
 import { generateAnswerChoices, validateAnswerChoices } from './answerChoices';
 
 type QuestionWithoutChoices = Omit<Question, 'choices'>;
+const MAX_GENERATION_ATTEMPTS = 20;
+
+interface QuestionGenerationOptions {
+  generateBase?: (
+    operation: MathOperation,
+    difficulty: DifficultyLevel,
+  ) => QuestionWithoutChoices;
+  generateChoices?: (question: QuestionWithoutChoices) => number[];
+  logger?: Pick<Console, 'error'>;
+  maxAttempts?: number;
+}
 
 const symbols: Record<MathOperation, string> = {
   addition: '+',
@@ -126,9 +138,43 @@ const generators: Record<
   division: generateDivision,
 };
 
+const fallbackFacts: Record<
+  MathOperation,
+  Record<DifficultyLevel, [number, number, number]>
+> = {
+  addition: { 1: [2, 3, 5], 2: [24, 15, 39], 3: [47, 38, 85], 4: [320, 145, 465] },
+  subtraction: { 1: [8, 3, 5], 2: [42, 17, 25], 3: [93, 48, 45], 4: [720, 265, 455] },
+  multiplication: { 1: [3, 4, 12], 2: [7, 8, 56], 3: [8, 24, 192], 4: [12, 14, 168] },
+  division: { 1: [12, 3, 4], 2: [56, 7, 8], 3: [108, 9, 12], 4: [144, 12, 12] },
+};
+
+function fallbackQuestion(
+  operation: MathOperation,
+  difficulty: DifficultyLevel,
+): Question {
+  const [first, second, answer] = fallbackFacts[operation][difficulty];
+  const base = makeQuestion(operation, first, second, answer, difficulty);
+  const distractors = [answer - 1, answer + 1, answer + 2].filter(
+    (choice) => choice >= 0 && choice !== answer,
+  );
+  for (let distance = 3; distractors.length < 3; distance += 1) {
+    distractors.push(answer + distance);
+  }
+  const choices = [answer, ...distractors.slice(0, 3)];
+  return {
+    ...base,
+    choices: shuffle(choices),
+  };
+}
+
+export function validateQuestion(question: Question): boolean {
+  return validateQuestionArithmetic(question) && validateAnswerChoices(question);
+}
+
 export function generateQuestion(
   operations: MathOperation | readonly MathOperation[],
   difficulty: DifficultyLevel,
+  options: QuestionGenerationOptions = {},
 ): Question {
   const operationList: readonly MathOperation[] =
     typeof operations === 'string' ? [operations] : operations;
@@ -136,14 +182,33 @@ export function generateQuestion(
     throw new Error('At least one operation is required to generate a question.');
   }
 
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  const maxAttempts = Math.max(1, options.maxAttempts ?? MAX_GENERATION_ATTEMPTS);
+  const generateBase =
+    options.generateBase ??
+    ((operation: MathOperation, level: DifficultyLevel) => generators[operation](level));
+  const generateChoices = options.generateChoices ?? generateAnswerChoices;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const operation = operationList[randomInteger(0, operationList.length - 1)];
-    const generated = generators[operation](difficulty);
-    if (validateQuestionArithmetic(generated)) {
-      const question = { ...generated, choices: generateAnswerChoices(generated) };
-      if (validateAnswerChoices(question)) return question;
+    try {
+      const generated = generateBase(operation, difficulty);
+      if (validateQuestionArithmetic(generated)) {
+        const question = { ...generated, choices: generateChoices(generated) };
+        if (validateQuestion(question)) return question;
+      }
+    } catch {
+      // Retry with a fresh candidate before using the safe fallback below.
     }
   }
 
-  throw new Error('A valid math question could not be generated.');
+  const fallback = fallbackQuestion(operationList[0], difficulty);
+  options.logger?.error(
+    `[questionGenerator] Used a safe ${operationList[0]} fallback after ${maxAttempts} invalid attempts.`,
+  );
+  if (!options.logger) {
+    console.error(
+      `[questionGenerator] Used a safe ${operationList[0]} fallback after ${maxAttempts} invalid attempts.`,
+    );
+  }
+  return fallback;
 }

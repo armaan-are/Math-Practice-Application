@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { FriendlyError } from '../components/common/FriendlyError';
 import { PageContainer } from '../components/layout/PageContainer';
 import { QuestionCard } from '../components/practice/QuestionCard';
 import { generateQuestion } from '../services/questionGenerator';
@@ -120,7 +121,15 @@ export function PracticePage() {
     : recoveredSession?.configuration;
 
   if (!configuration) {
-    return <Navigate to="/practice/setup" replace />;
+    return (
+      <FriendlyError
+        actionLabel="Set up a new session"
+        actionTo="/practice/setup"
+        eyebrow="Session unavailable"
+        message="There is no active practice session to continue. Start a new one when you are ready."
+        title="We could not find your practice session"
+      />
+    );
   }
 
   const patterns = activeMistakePatterns(

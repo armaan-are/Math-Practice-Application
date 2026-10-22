@@ -1,11 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
-import { loadMistakePatterns } from './services/storageService';
+import { validateStoredData } from './services/storageService';
 import './styles/global.css';
 
-// Validate and recover locally stored mistake data before the UI starts.
-loadMistakePatterns();
+// Validate each local category independently before the UI starts.
+validateStoredData();
 
 const rootElement = document.getElementById('root');
 

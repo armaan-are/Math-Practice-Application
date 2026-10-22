@@ -324,6 +324,25 @@ a {
   margin-top: 1rem;
 }
 
+.friendly-error .button-row {
+  justify-content: center;
+}
+
+.storage-recovery {
+  width: min(100% - 2rem, 76rem);
+  margin: 1rem auto 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid #9a6820;
+  border-radius: 1rem;
+  color: #704716;
+  background: #fff3cc;
+}
+
+.storage-recovery p {
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
 .page-heading {
   max-width: 48rem;
   margin-bottom: 2rem;

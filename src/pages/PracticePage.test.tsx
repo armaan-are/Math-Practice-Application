@@ -49,7 +49,17 @@ describe('PracticePage', () => {
 
   it('redirects when setup data is missing', () => {
     renderPractice();
-    expect(screen.getByText('Setup page')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'We could not find your practice session' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Set up a new session' })).toHaveAttribute(
+      'href',
+      '/practice/setup',
+    );
+    expect(screen.getByRole('link', { name: 'Return home' })).toHaveAttribute(
+      'href',
+      '/',
+    );
   });
 
   it('starts from setup and immediately saves a recoverable session', async () => {

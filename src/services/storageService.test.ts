@@ -4,6 +4,8 @@ import type { ActivePracticeSession, PracticeAttempt, PracticeSession } from '..
 import {
   STORAGE_KEYS,
   clearActiveSession,
+  clearStorageRecoveryNotices,
+  getStorageRecoveryNotices,
   initializeStorage,
   loadActiveSession,
   loadAttempts,
@@ -73,7 +75,10 @@ const activeSession: ActivePracticeSession = {
 };
 
 describe('storageService', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    clearStorageRecoveryNotices();
+  });
 
   it('versions app data without deleting unrelated keys', () => {
     localStorage.setItem('another.app', 'keep');
@@ -117,6 +122,37 @@ describe('storageService', () => {
     expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
     expect(loadAttempts()).toEqual([attempt]);
     expect(localStorage.getItem(STORAGE_KEYS.settings)).toBeNull();
+    expect(getStorageRecoveryNotices()).toEqual([
+      expect.objectContaining({ category: 'settings' }),
+    ]);
+  });
+
+  it('detects invalid attempts and preserves valid sessions', () => {
+    saveSession(session);
+    localStorage.setItem(
+      STORAGE_KEYS.attempts,
+      JSON.stringify([{ ...attempt, correctAnswer: 999 }]),
+    );
+    expect(loadAttempts()).toEqual([]);
+    expect(loadSessions()).toEqual([session]);
+    expect(localStorage.getItem(STORAGE_KEYS.attempts)).toBeNull();
+    expect(getStorageRecoveryNotices()).toEqual([
+      expect.objectContaining({ category: 'attempts' }),
+    ]);
+  });
+
+  it('detects invalid sessions and preserves valid attempts', () => {
+    saveAttempt(attempt);
+    localStorage.setItem(
+      STORAGE_KEYS.sessions,
+      JSON.stringify([{ ...session, attempted: 2 }]),
+    );
+    expect(loadSessions()).toEqual([]);
+    expect(loadAttempts()).toEqual([attempt]);
+    expect(localStorage.getItem(STORAGE_KEYS.sessions)).toBeNull();
+    expect(getStorageRecoveryNotices()).toEqual([
+      expect.objectContaining({ category: 'sessions' }),
+    ]);
   });
 
   it('validates mistake patterns and removes corrupt mistake data only', () => {
@@ -128,6 +164,9 @@ describe('storageService', () => {
     expect(loadMistakePatterns()).toEqual([]);
     expect(loadAttempts()).toEqual([attempt]);
     expect(localStorage.getItem(STORAGE_KEYS.mistakePatterns)).toBeNull();
+    expect(getStorageRecoveryNotices()).toEqual([
+      expect.objectContaining({ category: 'mistake patterns' }),
+    ]);
   });
 
   it('returns a capacity error rather than throwing', () => {

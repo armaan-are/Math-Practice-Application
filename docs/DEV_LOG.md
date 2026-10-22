@@ -496,3 +496,32 @@ Implement Phase 18 only: recover an active session after refresh, prevent accide
 - The first recovery test incorrectly read the answer-choice shortcut number and answer as one number (for example, `1` and `11` became `111`). Changed the test to read the answer from the accessible label's value segment.
 - The completion test exposed a real race: a queued persistence effect could rewrite an active snapshot after completion cleared it. Added a synchronous session-ending guard before cleanup/navigation so no later effect can resurrect completed progress.
 - The first full check found an unused test import, and TypeScript then caught a possibly undefined selected answer in snapshot validation. Removed the import and added explicit numeric narrowing plus boolean validation for the reveal state.
+
+## 2026-10-22 — Phase 19: Error handling and friendly recovery
+
+### Prompt received
+
+Implement Phase 19 only: friendly recovery for bad local data, question-generator failures, invalid routes, and missing sessions; test real failure paths, update the todo and log, and commit.
+
+### Changes
+
+- Strengthened settings, attempt, session, mistake-pattern, and active-session validation, including arithmetic, timestamps, counters, ranges, duplicate settings operations, and completion-state consistency.
+- Kept category-specific repair: invalid data removes only its own localStorage key and records a plain-language recovery notice while preserving unrelated practice data.
+- Added startup validation for every stored category and a friendly banner for repaired, unavailable, or full browser storage.
+- Added a reusable friendly error component with safe setup/home actions and used it for missing active sessions, missing summaries, and unknown routes.
+- Updated question generation to validate complete questions, retry invalid or thrown candidates up to a bounded maximum, log a useful development message, and return a valid operation/difficulty-specific fallback.
+- Added failure-path tests for malformed JSON, invalid arithmetic attempts, inconsistent sessions, invalid mistake patterns, unavailable storage, forced invalid generators, thrown generators, missing sessions/summaries, and invalid routes.
+
+### Verification
+
+- Targeted failure-path suite: passed 45 tests in 6 files.
+- Full `npm test -- --run`: passed 101 tests in 16 files before the final documentation-only update.
+- `npm run lint`: passed with zero warnings.
+- `npm run build`: passed; Vite generated the production bundle from 55 transformed modules.
+- Browser checks: `/practice/session` without active state showed a friendly missing-session page with setup and home actions; `/practice/summary` without completion state showed a safe summary-recovery page; an unknown route showed the custom 404 with practice and home actions.
+- Browser content contained no stack trace or technical error text, and the browser console reported no warnings or errors during the recovery-page checks.
+
+### Bugs and fixes
+
+- While reviewing the first storage-recovery refactor, malformed JSON was briefly grouped with blocked browser access, which would have skipped category cleanup. Split storage-access failures from parse/validation failures so corrupt JSON now removes only the affected key and produces the correct category-specific message.
+- The first full check reached the formatting gate and reported two changed service files. Formatted them with Prettier before the final verification run.

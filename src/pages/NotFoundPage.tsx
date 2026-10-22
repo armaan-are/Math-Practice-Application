@@ -1,11 +1,13 @@
-import { PlaceholderPage } from './PlaceholderPage';
+import { FriendlyError } from '../components/common/FriendlyError';
 
 export function NotFoundPage() {
   return (
-    <PlaceholderPage
+    <FriendlyError
+      actionLabel="Start practicing"
+      actionTo="/practice/setup"
       eyebrow="404"
       title="That page wandered off"
-      description="No problem—head home and pick a new math adventure."
+      message="No problem—we could not find that page. Choose a safe path below and keep your math adventure going."
     />
   );
 }

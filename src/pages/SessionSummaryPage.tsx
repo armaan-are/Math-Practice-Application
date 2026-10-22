@@ -1,5 +1,6 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ButtonLink } from '../components/common/ButtonLink';
+import { FriendlyError } from '../components/common/FriendlyError';
 import { PageContainer } from '../components/layout/PageContainer';
 import { DIFFICULTIES, OPERATIONS } from '../constants/math';
 import type { PracticeAttempt, PracticeSession } from '../types';
@@ -24,7 +25,17 @@ export function SessionSummaryPage() {
   const location = useLocation();
   const state = location.state as unknown;
 
-  if (!isSummaryState(state)) return <Navigate to="/practice/setup" replace />;
+  if (!isSummaryState(state)) {
+    return (
+      <FriendlyError
+        actionLabel="Start a new session"
+        actionTo="/practice/setup"
+        eyebrow="Summary unavailable"
+        message="There is no completed session to summarize. Your saved statistics are still safe."
+        title="We could not find that session summary"
+      />
+    );
+  }
 
   const { session } = state;
   const accuracy =
