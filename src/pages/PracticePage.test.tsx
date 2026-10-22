@@ -49,10 +49,16 @@ describe('PracticePage', () => {
       reviewMode: 'regular',
     });
     const firstQuestion = screen.getByRole('heading', { level: 1 }).textContent;
+    expect(screen.getByLabelText('Session progress announcement')).toHaveTextContent(
+      'Question 1 of 5. 0 right and 0 to review.',
+    );
     await answerOnce(user, 'right');
     expect(screen.getByText('1 right')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '20');
-    expect(screen.getByText(/Question 2 of 5/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Question 2 of 5/).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Session progress announcement')).toHaveTextContent(
+      'Question 2 of 5. 1 right and 0 to review.',
+    );
     expect(screen.getByRole('heading', { level: 1 }).textContent).not.toBe(firstQuestion);
   });
 

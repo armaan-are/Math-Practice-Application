@@ -16,6 +16,7 @@ export function AnswerChoice({
   return (
     <button
       aria-label={`Answer ${index + 1}: ${answer}${isSelected ? ', selected' : ''}`}
+      aria-keyshortcuts={String(index + 1)}
       aria-pressed={isSelected}
       className={`answer-choice${isSelected ? ' answer-choice--selected' : ''}`}
       disabled={disabled}

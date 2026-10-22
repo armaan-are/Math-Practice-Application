@@ -402,3 +402,31 @@ Implement Phase 15 only: mistake-review statistics, frequently missed facts, act
 
 - Review of the existing reset behavior found that it cleared attempts and sessions but would leave the newly displayed mistake patterns behind. Included mistake patterns in the same confirmed practice-history reset and added an assertion that they are removed.
 - No automated test failed in the final Phase 15 verification runs.
+## 2026-10-22 — Phase 16: Accessibility foundations
+
+### Prompt received
+
+Implement Phase 16 only: full keyboard operation, keys 1–4 for answers, accessible labels, announcements, focus management, reduced-motion support, tests, todo updates, logging, commit, and push.
+
+### Changes
+
+- Added number-key shortcuts for answer choices, native keyboard-operable buttons, visible focus styling, and a guard that leaves form typing alone.
+- Added spoken math labels, question/answer/session live regions, and focus movement to each new question and revealed answer.
+- Added live `prefers-reduced-motion` detection and combined it with the application's animation preference.
+- Added component tests for shortcuts, form-input isolation, announcements, focus, progress, native controls, and reduced motion.
+
+### Verification
+
+- Targeted accessibility tests: passed 12 tests in 2 files.
+- Full `npm test -- --run`: passed 86 tests in 15 files.
+- `npm run lint`: passed with zero warnings after the reduced-motion subscription fix.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 54 transformed modules.
+- Browser check: number key 3 selected answer 3, the selected state included visible “Selected” text, Space activated the native Flip card button, focus moved to the revealed answer, and no horizontal overflow appeared in the checked view.
+- Contrast calculation: primary tested text/background pairs ranged from 5.60:1 to 15.81:1, above WCAG AA normal-text contrast.
+- The 200% zoom and larger-system-font TODO items remain unchecked because this run did not establish those exact environment settings.
+
+### Bugs and fixes
+
+- The first accessibility test run found three test defects: a rerender fixture changed display text without changing operands, a jsdom Tab simulation could not leave a programmatically focused `tabIndex=-1` heading, and a text query became ambiguous after live regions were added. Corrected the fixture and tested native tabbability/semantics without relying on jsdom's incomplete focus traversal.
+- The full check then found React's lint rule rejecting a synchronous state update inside the reduced-motion effect. Replaced the effect-managed state with `useSyncExternalStore`, preserving live media-query updates without a cascading render.

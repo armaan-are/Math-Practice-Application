@@ -257,6 +257,18 @@ function ActivePracticeSession({
 
   return (
     <PageContainer className="practice-page">
+      <p
+        aria-label="Session progress announcement"
+        aria-live="polite"
+        className="visually-hidden"
+        role="status"
+      >
+        Question {session.attempted + 1}
+        {session.sessionLength === 'continuous'
+          ? ' in continuous practice'
+          : ` of ${session.sessionLength}`}
+        . {session.correct} right and {session.incorrect} to review.
+      </p>
       <div className="session-toolbar">
         <div>
           <span className="session-score session-score--correct">

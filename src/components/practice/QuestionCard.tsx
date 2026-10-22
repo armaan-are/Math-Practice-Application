@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Question } from '../../types';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { AnswerChoice } from './AnswerChoice';
 
 interface QuestionCardProps {
@@ -25,6 +26,24 @@ function getExplanation(question: Question): string {
   }
 }
 
+function getSpokenQuestion(question: Question, includeAnswer = false): string {
+  const operation = {
+    addition: 'plus',
+    subtraction: 'minus',
+    multiplication: 'multiplied by',
+    division: 'divided by',
+  }[question.operation];
+  const ending = includeAnswer ? question.correctAnswer : 'what';
+  return `${question.firstOperand} ${operation} ${question.secondOperand} equals ${ending}`;
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.matches('input, textarea, select') || target.isContentEditable)
+  );
+}
+
 function QuestionCardContent({
   question,
   currentQuestion,
@@ -37,6 +56,41 @@ function QuestionCardContent({
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const submitted = useRef(false);
+  const questionHeading = useRef<HTMLHeadingElement>(null);
+  const revealedHeading = useRef<HTMLHeadingElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const shouldAnimate = animationsEnabled && !prefersReducedMotion;
+
+  useEffect(() => {
+    questionHeading.current?.focus();
+  }, [question.id]);
+
+  useEffect(() => {
+    if (isCardFlipped) revealedHeading.current?.focus();
+  }, [isCardFlipped]);
+
+  useEffect(() => {
+    const handleNumberShortcut = (event: KeyboardEvent) => {
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isTypingTarget(event.target) ||
+        isCardFlipped ||
+        isSubmitted
+      ) {
+        return;
+      }
+
+      const index = Number(event.key) - 1;
+      if (index < 0 || index > 3 || index >= question.choices.length) return;
+      event.preventDefault();
+      setSelectedAnswer(question.choices[index]);
+    };
+
+    window.addEventListener('keydown', handleNumberShortcut);
+    return () => window.removeEventListener('keydown', handleNumberShortcut);
+  }, [isCardFlipped, isSubmitted, question.choices]);
 
   const submitResult = (selfReportedCorrect: boolean) => {
     if (submitted.current || selectedAnswer === null || !isCardFlipped) return;
@@ -51,7 +105,8 @@ function QuestionCardContent({
   return (
     <article
       aria-label={`Question ${currentQuestion} of ${totalLabel}`}
-      className={`question-card${isCardFlipped ? ' question-card--flipped' : ''}${animationsEnabled ? '' : ' question-card--no-motion'}`}
+      className={`question-card${isCardFlipped ? ' question-card--flipped' : ''}${shouldAnimate ? '' : ' question-card--no-motion'}`}
+      data-motion={shouldAnimate ? 'enabled' : 'reduced'}
     >
       <div className="question-card__meta">
         <span>
@@ -63,7 +118,24 @@ function QuestionCardContent({
 
       {!isCardFlipped ? (
         <div className="question-card__face question-card__front">
-          <h1 className="math-question">{question.displayText}</h1>
+          <p
+            aria-label="Question announcement"
+            aria-live="polite"
+            className="visually-hidden"
+            role="status"
+          >
+            Question {currentQuestion}
+            {totalQuestions !== 'continuous' ? ` of ${totalQuestions}` : ''}.{' '}
+            {getSpokenQuestion(question)}. Choose an answer.
+          </p>
+          <h1
+            aria-label={getSpokenQuestion(question)}
+            className="math-question"
+            ref={questionHeading}
+            tabIndex={-1}
+          >
+            {question.displayText}
+          </h1>
           <div className="answer-grid" aria-label="Answer choices">
             {question.choices.map((answer, index) => (
               <AnswerChoice
@@ -87,9 +159,23 @@ function QuestionCardContent({
           </button>
         </div>
       ) : (
-        <div className="question-card__face question-card__back" aria-live="polite">
+        <div className="question-card__face question-card__back">
+          <p
+            aria-label="Answer announcement"
+            aria-live="assertive"
+            className="visually-hidden"
+            role="status"
+          >
+            Correct answer: {question.correctAnswer}. Your answer: {selectedAnswer}.
+            Choose how you did.
+          </p>
           <p className="eyebrow">Here is the answer</p>
-          <h1 className="math-question math-question--answer">
+          <h1
+            aria-label={getSpokenQuestion(question, true)}
+            className="math-question math-question--answer"
+            ref={revealedHeading}
+            tabIndex={-1}
+          >
             {question.displayText.replace('?', String(question.correctAnswer))}
           </h1>
           <div className="answer-recap">
