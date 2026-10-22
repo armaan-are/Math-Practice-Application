@@ -6,7 +6,7 @@ import { generateQuestion } from '../services/questionGenerator';
 import type { PracticeConfiguration } from './PracticeSetupPage';
 import type { PracticeAttempt, PracticeSession, Question } from '../types';
 import { createId } from '../utils/ids';
-import { saveAttempt, saveSession } from '../services/storageService';
+import { loadSettings, saveAttempt, saveSession } from '../services/storageService';
 
 function isConfiguration(value: unknown): value is PracticeConfiguration {
   if (!value || typeof value !== 'object') return false;
@@ -63,6 +63,7 @@ function ActivePracticeSession({
   configuration,
   onNavigate,
 }: ActivePracticeSessionProps) {
+  const [settings] = useState(loadSettings);
   const [session, setSession] = useState<PracticeSession>(() => ({
     id: createId('session'),
     startedAt: new Date().toISOString(),
@@ -180,9 +181,11 @@ function ActivePracticeSession({
         </div>
       )}
       <QuestionCard
+        animationsEnabled={settings.cardAnimations}
         currentQuestion={session.attempted + 1}
         onResult={recordResult}
         question={question}
+        showExplanations={settings.showExplanations}
         totalQuestions={session.sessionLength}
       />
     </PageContainer>

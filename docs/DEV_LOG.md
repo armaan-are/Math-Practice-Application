@@ -263,3 +263,27 @@ Implement Phase 10 only: totals, accuracy, operation and difficulty breakdowns, 
 
 - The first component assertion expected one `100%` label, but the correct UI shows it in overall, operation, and difficulty cards. Updated the test to require at least one match without rejecting valid breakdowns.
 - The strict lint gate flagged the revision-only memo dependency. Referencing the revision inside the memo makes the deliberate refresh trigger explicit; lint and build then passed.
+
+## 2026-10-21 — Phase 11: Settings
+
+### Prompt received
+
+Implement Phase 11 only: working settings, practice defaults, mastery threshold, sound/animation/explanation controls, confirmed clear-data action, persistence tests, logging, commit, and push.
+
+### Changes
+
+- Added persisted controls for sound, animation, explanations, positive feedback, mastery threshold, operations, difficulty, and session length.
+- Applied saved defaults on practice setup and animation/explanation preferences during sessions.
+- Added explicit save status and strongly confirmed clear-all behavior that restores defaults and returns home.
+- Added settings persistence and clear-all component tests.
+
+### Verification
+
+- `npm run test`: passed 49 tests in 12 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 50 transformed modules.
+
+### Bugs and fixes
+
+- The persistence test found that clearing the controlled mastery input immediately inserted 1, causing a typed 4 to become 14 and clamp to 10. Allowed a temporary blank editing state and committed only nonblank values; the setting now saves 4 correctly.

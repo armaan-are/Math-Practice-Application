@@ -891,6 +891,44 @@ button.button:disabled {
   font-size: 0.85rem;
 }
 
+.settings-page {
+  width: min(100%, 68rem);
+  margin: 0 auto;
+}
+.toggle-list {
+  display: grid;
+  gap: 0.6rem;
+}
+.toggle-row,
+.number-setting {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid #d9e1f0;
+  border-radius: 1rem;
+  background: #fff;
+  font-weight: 800;
+}
+.toggle-row input {
+  width: 1.5rem;
+  height: 1.5rem;
+  accent-color: #5a56d6;
+}
+.number-setting {
+  margin-bottom: 1rem;
+}
+.number-setting input {
+  width: 5rem;
+  min-height: 2.8rem;
+  padding: 0.5rem;
+  border: 2px solid #aebbd2;
+  border-radius: 0.7rem;
+  text-align: center;
+}
+
 .setup-submit {
   min-width: 13rem;
 }
