@@ -820,6 +820,77 @@ button.button:disabled {
   margin-top: 1.5rem;
 }
 
+.stats-overview,
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+}
+
+.stats-overview > div,
+.performance-card,
+.empty-state,
+.recent-sessions article {
+  padding: 1.25rem;
+  border: 2px solid #d9e1f0;
+  border-radius: 1.2rem;
+  background: #fff;
+}
+
+.stats-overview > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.stats-overview span {
+  color: #5c6880;
+  font-weight: 800;
+}
+.stats-overview strong {
+  font-size: 2rem;
+}
+.stats-section {
+  margin: 2.5rem 0;
+}
+.stats-section h2 {
+  font-size: 1.5rem;
+}
+.performance-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.performance-card > strong {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 1.8rem;
+}
+.performance-card p,
+.empty-inline {
+  color: #5c6880;
+  line-height: 1.5;
+}
+.recent-sessions {
+  display: grid;
+  gap: 0.7rem;
+}
+.recent-sessions article {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.recent-sessions article > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.recent-sessions article > div:last-child {
+  text-align: right;
+}
+.recent-sessions span {
+  color: #5c6880;
+  font-size: 0.85rem;
+}
+
 .setup-submit {
   min-width: 13rem;
 }
@@ -863,6 +934,18 @@ button.button:disabled {
 
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-overview,
+  .stats-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recent-sessions article {
+    flex-direction: column;
+  }
+  .recent-sessions article > div:last-child {
+    text-align: left;
   }
 
   .summary-details {

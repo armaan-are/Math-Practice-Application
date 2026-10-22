@@ -238,3 +238,28 @@ Implement Phase 9 only: robust browser localStorage for settings, attempts, and 
 ### Bugs and fixes
 
 - The first quota test revealed that the schema-version write in storage initialization could throw before the guarded data write. Wrapped initialization and propagated its typed failure result from settings saves; the real capacity path now returns `{ ok: false, error: 'capacity' }` without crashing.
+
+## 2026-10-21 — Phase 10: Statistics
+
+### Prompt received
+
+Implement Phase 10 only: totals, accuracy, operation and difficulty breakdowns, recent stored history, zero-attempt handling, tests, todo updates, logging, commit, and push.
+
+### Changes
+
+- Added pure statistics and accuracy calculations derived from stored attempts.
+- Added overall totals, all operation and difficulty cards, empty states, and newest-first recent sessions.
+- Added a confirmed reset that clears practice attempts, sessions, and aggregate statistics while preserving settings.
+- Added unit and component coverage for populated, empty, and reset states.
+
+### Verification
+
+- `npm run test`: passed 47 tests in 11 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 50 transformed modules.
+
+### Bugs and fixes
+
+- The first component assertion expected one `100%` label, but the correct UI shows it in overall, operation, and difficulty cards. Updated the test to require at least one match without rejecting valid breakdowns.
+- The strict lint gate flagged the revision-only memo dependency. Referencing the revision inside the memo makes the deliberate refresh trigger explicit; lint and build then passed.
