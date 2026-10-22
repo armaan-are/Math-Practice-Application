@@ -96,6 +96,8 @@ function isAttempt(value: unknown): value is PracticeAttempt {
     Number.isFinite(item.selectedAnswer) &&
     typeof item.selfReportedCorrect === 'boolean' &&
     [1, 2, 3, 4].includes(item.difficulty ?? 0) &&
+    (item.source === 'regular' || item.source === 'mistake-review') &&
+    (item.source === 'regular' || typeof item.mistakePatternId === 'string') &&
     typeof item.sessionId === 'string' &&
     typeof item.attemptedAt === 'string'
   );
@@ -112,9 +114,12 @@ function isSession(value: unknown): value is PracticeSession {
     item.operations.every(isOperation) &&
     [1, 2, 3, 4].includes(item.difficulty ?? 0) &&
     [5, 10, 20, 'continuous'].includes(item.sessionLength ?? 0) &&
+    (item.reviewMode === 'regular' || item.reviewMode === 'mistake-review') &&
     Number.isInteger(item.attempted) &&
     Number.isInteger(item.correct) &&
     Number.isInteger(item.incorrect) &&
+    Number.isInteger(item.mistakeReviewCount) &&
+    (item.mistakeReviewCount ?? -1) >= 0 &&
     typeof item.isActive === 'boolean'
   );
 }

@@ -3,11 +3,31 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PageContainer } from '../components/layout/PageContainer';
 import { QuestionCard } from '../components/practice/QuestionCard';
 import { generateQuestion } from '../services/questionGenerator';
+import {
+  generateSimilarQuestion,
+  similarQuestionKey,
+} from '../services/similarQuestionGenerator';
 import type { PracticeConfiguration } from './PracticeSetupPage';
-import type { PracticeAttempt, PracticeSession, Question } from '../types';
+import type {
+  MistakePattern,
+  PracticeAttempt,
+  PracticeSession,
+  Question,
+} from '../types';
 import { createId } from '../utils/ids';
-import { loadSettings, saveAttempt, saveSession } from '../services/storageService';
+import {
+  loadMistakePatterns,
+  loadSettings,
+  saveAttempt,
+  saveMistakePatterns,
+  saveSession,
+} from '../services/storageService';
 import { recordMistakeForAttempt } from '../services/mistakeService';
+import {
+  activeMistakePatterns,
+  selectMistakePattern,
+  updatePatternsForReviewAttempt,
+} from '../services/mistakeReviewService';
 
 function isConfiguration(value: unknown): value is PracticeConfiguration {
   if (!value || typeof value !== 'object') return false;
@@ -18,11 +38,12 @@ function isConfiguration(value: unknown): value is PracticeConfiguration {
     candidate.operations.length > 0 &&
     candidate.operations.every((operation) => allowedOperations.includes(operation)) &&
     [1, 2, 3, 4].includes(candidate.difficulty ?? 0) &&
-    [5, 10, 20, 'continuous'].includes(candidate.sessionLength ?? 0)
+    [5, 10, 20, 'continuous'].includes(candidate.sessionLength ?? 0) &&
+    (candidate.reviewMode === 'regular' || candidate.reviewMode === 'mistake-review')
   );
 }
 
-function nextQuestion(
+function nextRegularQuestion(
   configuration: PracticeConfiguration,
   previous?: Question,
 ): Question {
@@ -43,6 +64,29 @@ function nextQuestion(
   return generateQuestion(configuration.operations, configuration.difficulty);
 }
 
+function nextReviewQuestion(
+  configuration: PracticeConfiguration,
+  patterns: readonly MistakePattern[],
+  masteryThreshold: number,
+  previous?: Question,
+): Question {
+  const eligible = activeMistakePatterns(
+    patterns,
+    configuration.operations,
+    configuration.difficulty,
+  );
+  const pattern = selectMistakePattern(
+    eligible,
+    masteryThreshold,
+    previous?.mistakePatternId,
+  );
+  if (!pattern) throw new Error('No active mistake pattern is available.');
+
+  return generateSimilarQuestion(pattern, {
+    excludeQuestionKeys: previous ? [similarQuestionKey(previous)] : [],
+  });
+}
+
 export function PracticePage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,33 +96,55 @@ export function PracticePage() {
     return <Navigate to="/practice/setup" replace />;
   }
 
-  return <ActivePracticeSession configuration={configuration} onNavigate={navigate} />;
+  const patterns = activeMistakePatterns(
+    loadMistakePatterns(),
+    configuration.operations,
+    configuration.difficulty,
+  );
+  if (configuration.reviewMode === 'mistake-review' && patterns.length === 0) {
+    return <Navigate to="/practice/setup?mode=mistakes" replace />;
+  }
+
+  return (
+    <ActivePracticeSession
+      configuration={configuration}
+      initialPatterns={patterns}
+      onNavigate={navigate}
+    />
+  );
 }
 
 interface ActivePracticeSessionProps {
   configuration: PracticeConfiguration;
+  initialPatterns: MistakePattern[];
   onNavigate: ReturnType<typeof useNavigate>;
 }
 
 function ActivePracticeSession({
   configuration,
+  initialPatterns,
   onNavigate,
 }: ActivePracticeSessionProps) {
   const [settings] = useState(loadSettings);
+  const [patterns, setPatterns] = useState(initialPatterns);
   const [session, setSession] = useState<PracticeSession>(() => ({
     id: createId('session'),
     startedAt: new Date().toISOString(),
     operations: configuration.operations,
     difficulty: configuration.difficulty,
     sessionLength: configuration.sessionLength,
-    reviewMode: 'regular',
+    reviewMode: configuration.reviewMode,
     attempted: 0,
     correct: 0,
     incorrect: 0,
     mistakeReviewCount: 0,
     isActive: true,
   }));
-  const [question, setQuestion] = useState<Question>(() => nextQuestion(configuration));
+  const [question, setQuestion] = useState<Question>(() =>
+    configuration.reviewMode === 'mistake-review'
+      ? nextReviewQuestion(configuration, initialPatterns, settings.masteryThreshold)
+      : nextRegularQuestion(configuration),
+  );
   const [attempts, setAttempts] = useState<PracticeAttempt[]>([]);
 
   const finishSession = (
@@ -104,6 +170,7 @@ function ActivePracticeSession({
       selfReportedCorrect,
       difficulty: question.difficulty,
       source: question.source,
+      mistakePatternId: question.mistakePatternId,
       attemptedAt: new Date().toISOString(),
       sessionId: session.id,
     };
@@ -115,12 +182,26 @@ function ActivePracticeSession({
       incorrect: session.incorrect + (selfReportedCorrect ? 0 : 1),
       mistakeReviewCount:
         session.mistakeReviewCount + (question.source === 'mistake-review' ? 1 : 0),
+      operations: session.operations.includes(question.operation)
+        ? session.operations
+        : [...session.operations, question.operation],
     };
 
     setAttempts(allAttempts);
     setSession(updated);
     saveAttempt(attempt);
-    if (!selfReportedCorrect) recordMistakeForAttempt(attempt);
+    let updatedPatterns = patterns;
+    if (question.source === 'mistake-review') {
+      updatedPatterns = updatePatternsForReviewAttempt(
+        patterns,
+        attempt,
+        settings.masteryThreshold,
+      );
+      setPatterns(updatedPatterns);
+      saveMistakePatterns(updatedPatterns);
+    } else if (!selfReportedCorrect) {
+      recordMistakeForAttempt(attempt);
+    }
 
     if (
       updated.sessionLength !== 'continuous' &&
@@ -135,7 +216,28 @@ function ActivePracticeSession({
       return;
     }
 
-    setQuestion(nextQuestion(configuration, question));
+    if (configuration.reviewMode === 'mistake-review') {
+      const remaining = activeMistakePatterns(
+        updatedPatterns,
+        configuration.operations,
+        configuration.difficulty,
+      );
+      if (remaining.length === 0) {
+        const completed = {
+          ...updated,
+          completedAt: new Date().toISOString(),
+          isActive: false,
+        };
+        finishSession(completed, allAttempts);
+        return;
+      }
+      setQuestion(
+        nextReviewQuestion(configuration, remaining, settings.masteryThreshold, question),
+      );
+      return;
+    }
+
+    setQuestion(nextRegularQuestion(configuration, question));
   };
 
   const endContinuousSession = () => {

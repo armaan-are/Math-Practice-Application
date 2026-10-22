@@ -342,3 +342,33 @@ Implement Phase 13 only: generate valid similar practice questions using nearby 
 ### Bugs and fixes
 
 - No functional failure occurred during this phase. A final coverage review added deterministic assertions that the main service selects reversal and fact-family strategies, rather than testing only the candidate helpers.
+
+## 2026-10-21 — Phase 14: Mistake review mode
+
+### Prompt received
+
+Implement Phase 14 only: usable mistake-review sessions, pattern prioritization, similar-question practice and mastery progression; confirm a wrong self-reported answer activates review; test, update the todo, log, and commit.
+
+### Changes
+
+- Added regular-practice and mistake-review choices to setup, with matching active-pattern counts, a clear unavailable explanation, and automatic selection from the summary's Practice Mistakes link.
+- Added filtering for active, unmastered patterns matching the chosen operations and difficulty.
+- Added priority scoring for incorrect frequency, recency, and remaining mastery progress, with randomized tie-breaking and immediate-repeat avoidance when multiple patterns are available.
+- Connected mistake-review sessions to the similar-question generator and rotated among eligible patterns.
+- Persisted the originating mistake-pattern ID on each review attempt and counted review questions in completed sessions.
+- Updated the original pattern after every review answer, counted review attempts and correct answers, handled wrong related answers, and persisted all pattern changes.
+- Applied the saved mastery threshold, excluded mastered patterns, ended review sessions when all eligible patterns were mastered, and retained reactivation after a future wrong answer.
+- Added service, setup, integration, persistence-linkage, session-count, prioritization, and mastery-transition tests, including the wrong-answer-to-enabled-review flow.
+
+### Verification
+
+- `npm run test`: passed 79 tests in 15 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 53 transformed modules.
+- `git diff --check`: passed with no whitespace errors.
+
+### Bugs and fixes
+
+- During incremental editing, inspection found a duplicate `state` property in the setup navigation call before tests were run. Removed the obsolete property so the complete review configuration is passed through one route-state object.
+- No automated test failed in the final Phase 14 verification runs.

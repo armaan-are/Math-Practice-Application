@@ -436,6 +436,10 @@ button.select-card:hover,
   gap: 0.65rem;
 }
 
+.segmented-control--two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .segmented-control label {
   position: relative;
 }
@@ -466,6 +470,16 @@ button.select-card:hover,
 .segmented-control input:focus-visible + span {
   outline: 4px solid #ffb000;
   outline-offset: 3px;
+}
+
+.segmented-control input:disabled + span {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.review-status {
+  margin: 1rem 0 0;
+  font-weight: 700;
 }
 
 .validation-message {

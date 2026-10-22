@@ -36,6 +36,7 @@ describe('SessionSummaryPage', () => {
     expect(screen.getByLabelText('80% accuracy')).toBeInTheDocument();
     expect(screen.getByText('Addition, Multiplication')).toBeInTheDocument();
     expect(screen.getByText(/Easy/)).toBeInTheDocument();
+    expect(screen.getByText('Mistake review').nextElementSibling).toHaveTextContent('0');
     expect(screen.getByRole('link', { name: 'Practice again' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Practice mistakes' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Change settings' })).toBeInTheDocument();
