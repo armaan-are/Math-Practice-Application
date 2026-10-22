@@ -59,3 +59,30 @@ Continue through the todo phases sequentially, running tests, lint, and a produc
 
 - The updated home-page test first failed because both the header and hero intentionally contain a link named `Settings`. The assertion was changed to verify all matching links target `/settings`.
 - The build then caught an unsupported `exact` property in the Testing Library role-query type. Removing that property preserved the exact accessible-name query and allowed both tests and TypeScript compilation to pass.
+
+## 2026-10-21 — Phase 3: Practice configuration
+
+### Prompt received
+
+Implement Phase 3 only: operation, difficulty, and session-length selectors with correct defaults, validation, navigation, tests, todo updates, logging, commit, and push.
+
+### Changes
+
+- Added multi-select operation controls for addition, subtraction, multiplication, and division, including select-all and clear-all actions.
+- Added four single-select difficulty cards with level descriptions.
+- Added 5, 10, 20, and continuous session-length choices with a 10-question default.
+- Added validation and a disabled start action when no operation is selected.
+- Passed the complete setup configuration through React Router navigation state.
+- Added responsive styles and explicit pressed-state accessibility labels.
+
+### Verification
+
+- `npm run test`: passed 3 tests in 2 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed after formatting the new test.
+- `npm run build`: passed; Vite generated the production bundle from 40 transformed modules.
+
+### Bugs and fixes
+
+- Initial selector tests could not query the operation buttons because adjacent visible label/status text produced names such as `AdditionSelected`. Added explicit names such as `Addition selected` and `Subtraction not selected`, improving both testability and screen-reader output.
+- The first successful test rerun still failed the formatting gate for the edited test file. Running the configured formatter and then the entire check suite resolved it.

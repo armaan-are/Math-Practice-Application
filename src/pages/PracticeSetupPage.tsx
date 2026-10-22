@@ -1,11 +1,65 @@
-import { PlaceholderPage } from './PlaceholderPage';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { DifficultySelector } from '../components/setup/DifficultySelector';
+import { OperationSelector } from '../components/setup/OperationSelector';
+import { SessionLengthSelector } from '../components/setup/SessionLengthSelector';
+import { PageContainer } from '../components/layout/PageContainer';
+import type { DifficultyLevel, MathOperation, SessionLength } from '../types';
+
+export interface PracticeConfiguration {
+  operations: MathOperation[];
+  difficulty: DifficultyLevel;
+  sessionLength: SessionLength;
+}
 
 export function PracticeSetupPage() {
+  const navigate = useNavigate();
+  const [operations, setOperations] = useState<MathOperation[]>(['addition']);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(1);
+  const [sessionLength, setSessionLength] = useState<SessionLength>(10);
+  const [showValidation, setShowValidation] = useState(false);
+
+  const startSession = () => {
+    if (operations.length === 0) {
+      setShowValidation(true);
+      return;
+    }
+
+    navigate('/practice/session', {
+      state: { operations, difficulty, sessionLength } satisfies PracticeConfiguration,
+    });
+  };
+
+  const updateOperations = (next: MathOperation[]) => {
+    setOperations(next);
+    if (next.length > 0) setShowValidation(false);
+  };
+
   return (
-    <PlaceholderPage
-      eyebrow="Practice setup"
-      title="Choose your math mission"
-      description="Your operation, level, and session choices will live here."
-    />
+    <PageContainer>
+      <section className="setup-page" aria-labelledby="setup-title">
+        <div className="page-heading">
+          <p className="eyebrow">Practice setup</p>
+          <h1 id="setup-title">Choose your math mission</h1>
+          <p>Three quick choices, then you are ready to solve.</p>
+        </div>
+        <OperationSelector selected={operations} onChange={updateOperations} />
+        <DifficultySelector selected={difficulty} onChange={setDifficulty} />
+        <SessionLengthSelector selected={sessionLength} onChange={setSessionLength} />
+        {showValidation && (
+          <p className="validation-message" role="alert">
+            Choose at least one kind of math to begin.
+          </p>
+        )}
+        <button
+          className="button button--primary setup-submit"
+          disabled={operations.length === 0}
+          onClick={startSession}
+          type="button"
+        >
+          Start session
+        </button>
+      </section>
+    </PageContainer>
   );
 }
