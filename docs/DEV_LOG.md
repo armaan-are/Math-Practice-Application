@@ -86,3 +86,28 @@ Implement Phase 3 only: operation, difficulty, and session-length selectors with
 
 - Initial selector tests could not query the operation buttons because adjacent visible label/status text produced names such as `AdditionSelected`. Added explicit names such as `Addition selected` and `Subtraction not selected`, improving both testability and screen-reader output.
 - The first successful test rerun still failed the formatting gate for the edited test file. Running the configured formatter and then the entire check suite resolved it.
+
+## 2026-10-21 — Phase 4: Arithmetic question generation
+
+### Prompt received
+
+Implement Phase 4 only: accurate question generation for all four operations and every specified difficulty, especially whole-number division and boundary cases; test, verify, update, log, commit, and push.
+
+### Changes
+
+- Added tested random-integer, immutable shuffle, and unique-ID utilities.
+- Added operation-specific generators for all four arithmetic operations and all four difficulty levels.
+- Ensured subtraction remains nonnegative and division is built from a nonzero divisor and whole-number quotient.
+- Added arithmetic validation, a bounded generation retry loop, mixed-operation selection, and explicit empty-operation failure handling.
+- Added repeated boundary tests covering thousands of generated questions.
+
+### Verification
+
+- `npm run test`: passed 24 tests in 4 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 40 transformed modules.
+
+### Bugs and fixes
+
+- Runtime tests passed on the first generator implementation, but the TypeScript production build found that `Array.isArray` did not safely narrow the `MathOperation | readonly MathOperation[]` union for record indexing. Replaced it with an explicit string check and typed readonly operation list; the full suite then passed.
