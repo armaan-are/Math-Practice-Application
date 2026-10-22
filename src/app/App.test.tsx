@@ -3,10 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { App } from './App';
 
 describe('App', () => {
-  it('renders the application title and welcome message', () => {
+  it('renders the home page and its primary navigation actions', () => {
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'Math Quest' })).toBeInTheDocument();
-    expect(screen.getByText(/grow your math skills/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Build big math confidence.' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Start practicing' })).toHaveAttribute(
+      'href',
+      '/practice/setup',
+    );
+    expect(screen.getByRole('link', { name: 'View statistics' })).toHaveAttribute(
+      'href',
+      '/statistics',
+    );
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Settings' })
+        .every((link) => link.getAttribute('href') === '/settings'),
+    ).toBe(true);
   });
 });
