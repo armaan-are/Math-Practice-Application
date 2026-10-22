@@ -287,3 +287,30 @@ Implement Phase 11 only: working settings, practice defaults, mastery threshold,
 ### Bugs and fixes
 
 - The persistence test found that clearing the controlled mastery input immediately inserted 1, causing a typed 4 to become 14 and clamp to 10. Allowed a temporary blank editing state and committed only nonblank values; the setting now saves 4 correctly.
+
+## 2026-10-21 — Phase 12: Mistake tracking
+
+### Prompt received
+
+Implement Phase 12 only: record and update mistake patterns whenever a student self-reports wrong, persist them, preserve meaningful subtraction and division operand order, test, update the todo, log, commit, and push.
+
+### Changes
+
+- Added mistake-pattern creation when a completed attempt is self-reported wrong, including the operation, ordered operands, correct answer, difficulty, timestamp, and initialized progress counts.
+- Added stable pattern matching that treats addition and multiplication as commutative while keeping subtraction and division operand order distinct.
+- Added repeat-mistake updates that increment the incorrect count, refresh the timestamp, reset mastery progress, and avoid duplicate records.
+- Added validated localStorage loading and saving for mistake patterns, including arithmetic consistency checks and category-specific recovery from corrupt records.
+- Added application-startup loading so invalid stored mistake-pattern data is repaired before the interface renders.
+- Added unit, storage, and practice-page integration tests covering wrong self-reports, repeat mistakes, correct-answer no-ops, persistence, corrupt data, and operand-order behavior.
+
+### Verification
+
+- `npm run test`: passed 55 tests in 13 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 51 transformed modules.
+- `git diff --check`: passed with no whitespace errors.
+
+### Bugs and fixes
+
+- No test failure occurred during this phase. A final requirement review found that startup loading should be literal rather than deferred until the review feature; added startup validation and strengthened stored-pattern validation before the final verification run.

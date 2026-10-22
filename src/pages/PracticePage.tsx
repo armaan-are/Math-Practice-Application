@@ -7,6 +7,7 @@ import type { PracticeConfiguration } from './PracticeSetupPage';
 import type { PracticeAttempt, PracticeSession, Question } from '../types';
 import { createId } from '../utils/ids';
 import { loadSettings, saveAttempt, saveSession } from '../services/storageService';
+import { recordMistakeForAttempt } from '../services/mistakeService';
 
 function isConfiguration(value: unknown): value is PracticeConfiguration {
   if (!value || typeof value !== 'object') return false;
@@ -119,6 +120,7 @@ function ActivePracticeSession({
     setAttempts(allAttempts);
     setSession(updated);
     saveAttempt(attempt);
+    if (!selfReportedCorrect) recordMistakeForAttempt(attempt);
 
     if (
       updated.sessionLength !== 'continuous' &&

@@ -1,5 +1,10 @@
 import { DEFAULT_SETTINGS } from '../constants/defaults';
-import type { AppSettings, PracticeAttempt, PracticeSession } from '../types';
+import type {
+  AppSettings,
+  MistakePattern,
+  PracticeAttempt,
+  PracticeSession,
+} from '../types';
 
 const SCHEMA_VERSION = 1;
 
@@ -114,6 +119,51 @@ function isSession(value: unknown): value is PracticeSession {
   );
 }
 
+export function isMistakePattern(value: unknown): value is MistakePattern {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<MistakePattern>;
+  const hasValidShape =
+    typeof item.id === 'string' &&
+    isOperation(item.operation) &&
+    Number.isInteger(item.firstOperand) &&
+    (item.firstOperand ?? -1) >= 0 &&
+    Number.isInteger(item.secondOperand) &&
+    (item.secondOperand ?? -1) >= 0 &&
+    Number.isInteger(item.correctAnswer) &&
+    (item.correctAnswer ?? -1) >= 0 &&
+    [1, 2, 3, 4].includes(item.difficulty ?? 0) &&
+    Number.isInteger(item.incorrectCount) &&
+    (item.incorrectCount ?? 0) >= 1 &&
+    Number.isInteger(item.similarCorrectCount) &&
+    (item.similarCorrectCount ?? -1) >= 0 &&
+    Number.isInteger(item.similarAttemptCount) &&
+    (item.similarAttemptCount ?? -1) >= 0 &&
+    typeof item.lastIncorrectAt === 'string' &&
+    !Number.isNaN(Date.parse(item.lastIncorrectAt)) &&
+    typeof item.mastered === 'boolean';
+
+  if (!hasValidShape) return false;
+
+  switch (item.operation) {
+    case 'addition':
+      return item.firstOperand! + item.secondOperand! === item.correctAnswer;
+    case 'subtraction':
+      return (
+        item.firstOperand! >= item.secondOperand! &&
+        item.firstOperand! - item.secondOperand! === item.correctAnswer
+      );
+    case 'multiplication':
+      return item.firstOperand! * item.secondOperand! === item.correctAnswer;
+    case 'division':
+      return (
+        item.secondOperand! > 0 &&
+        item.firstOperand! / item.secondOperand! === item.correctAnswer
+      );
+    default:
+      return false;
+  }
+}
+
 export function initializeStorage(): StorageResult {
   const target = storage();
   if (!target) return { ok: false, error: 'unavailable' };
@@ -170,6 +220,21 @@ export function saveSession(session: PracticeSession): StorageResult {
   if (!isSession(session)) return { ok: false, error: 'invalid' };
   const existing = loadSessions().filter((item) => item.id !== session.id);
   return write(STORAGE_KEYS.sessions, [session, ...existing].slice(0, 100));
+}
+
+export function loadMistakePatterns(): MistakePattern[] {
+  initializeStorage();
+  return read(
+    STORAGE_KEYS.mistakePatterns,
+    (value): value is MistakePattern[] =>
+      Array.isArray(value) && value.every(isMistakePattern),
+    [],
+  );
+}
+
+export function saveMistakePatterns(patterns: readonly MistakePattern[]): StorageResult {
+  if (!patterns.every(isMistakePattern)) return { ok: false, error: 'invalid' };
+  return write(STORAGE_KEYS.mistakePatterns, patterns);
 }
 
 export function clearPracticeHistory(): StorageResult {

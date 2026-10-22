@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadMistakePatterns } from '../services/storageService';
 import { PracticePage } from './PracticePage';
 
 function renderPractice(state?: unknown) {
@@ -26,6 +27,8 @@ async function answerOnce(
 }
 
 describe('PracticePage', () => {
+  beforeEach(() => localStorage.clear());
+
   it('redirects when setup data is missing', () => {
     renderPractice();
     expect(screen.getByText('Setup page')).toBeInTheDocument();
@@ -54,5 +57,18 @@ describe('PracticePage', () => {
     await user.click(screen.getByRole('button', { name: 'End session' }));
     expect(screen.getByText('Summary page')).toBeInTheDocument();
     vi.restoreAllMocks();
+  });
+
+  it('persists a mistake pattern after a self-reported wrong answer', async () => {
+    const user = userEvent.setup();
+    renderPractice({ operations: ['division'], difficulty: 2, sessionLength: 5 });
+    await answerOnce(user, 'wrong');
+    expect(loadMistakePatterns()).toHaveLength(1);
+    expect(loadMistakePatterns()[0]).toMatchObject({
+      operation: 'division',
+      incorrectCount: 1,
+      similarCorrectCount: 0,
+      mastered: false,
+    });
   });
 });

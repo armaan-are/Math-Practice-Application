@@ -5,6 +5,7 @@ import {
   STORAGE_KEYS,
   initializeStorage,
   loadAttempts,
+  loadMistakePatterns,
   loadSessions,
   loadSettings,
   saveAttempt,
@@ -67,6 +68,17 @@ describe('storageService', () => {
     expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
     expect(loadAttempts()).toEqual([attempt]);
     expect(localStorage.getItem(STORAGE_KEYS.settings)).toBeNull();
+  });
+
+  it('validates mistake patterns and removes corrupt mistake data only', () => {
+    saveAttempt(attempt);
+    localStorage.setItem(
+      STORAGE_KEYS.mistakePatterns,
+      JSON.stringify([{ operation: 'division', secondOperand: 0 }]),
+    );
+    expect(loadMistakePatterns()).toEqual([]);
+    expect(loadAttempts()).toEqual([attempt]);
+    expect(localStorage.getItem(STORAGE_KEYS.mistakePatterns)).toBeNull();
   });
 
   it('returns a capacity error rather than throwing', () => {
