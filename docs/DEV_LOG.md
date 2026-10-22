@@ -187,3 +187,28 @@ Implement Phase 7 only: complete session state, progress, transitions, continuou
 ### Bugs and fixes
 
 - No defect appeared in the verified Phase 7 run. The formatter normalized the new page and test before checks.
+
+## 2026-10-21 — Phase 8: Session summary
+
+### Prompt received
+
+Implement Phase 8 only: accurate completion and summary totals, correct, incorrect, accuracy, all navigation actions, tests, todo updates, logging, commit, and push.
+
+### Changes
+
+- Added a validated session-summary route that redirects safely when completion data is missing.
+- Added attempted, correct, incorrect, mistake-review, accuracy, operation, and difficulty results.
+- Added practice-again, practice-mistakes, settings, statistics, and home actions.
+- Added a zero-attempt accuracy guard for continuous sessions ended before answering.
+- Added responsive summary presentation and component tests for populated, empty, and missing states.
+
+### Verification
+
+- `npm run test`: passed 39 tests in 8 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 47 transformed modules.
+
+### Bugs and fixes
+
+- No functional defect occurred in the verified Phase 8 run. The formatter normalized the new summary component before checks.

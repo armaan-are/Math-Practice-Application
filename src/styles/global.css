@@ -739,6 +739,87 @@ button.button:disabled {
   transition: width 240ms ease;
 }
 
+.summary-card {
+  width: min(100%, 58rem);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: 3px solid #17223b;
+  border-radius: 2rem;
+  background: #ffffff;
+  box-shadow: 12px 12px 0 #ffd95a;
+  text-align: center;
+}
+
+.summary-card h1 {
+  max-width: 14ch;
+  margin: 0.5rem auto 1.5rem;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.accuracy-ring {
+  display: grid;
+  width: 10rem;
+  height: 10rem;
+  margin: 0 auto 1.5rem;
+  place-content: center;
+  border: 1rem solid #b8efd6;
+  border-radius: 50%;
+}
+
+.accuracy-ring strong {
+  font-size: 2.25rem;
+}
+
+.accuracy-ring span {
+  color: #5c6880;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.summary-grid div {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f0f4fb;
+}
+
+.summary-grid dt {
+  color: #5c6880;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.summary-grid dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.summary-details {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1.25rem 0;
+  color: #46516b;
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
 .setup-submit {
   min-width: 13rem;
 }
@@ -778,6 +859,16 @@ button.button:disabled {
 
   .feature-strip {
     grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-details {
+    align-items: center;
+    flex-direction: column;
+    gap: 0;
   }
 
   .choice-grid--operations,
