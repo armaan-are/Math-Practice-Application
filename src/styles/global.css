@@ -20,8 +20,8 @@
 
 html,
 body {
-  min-width: 320px;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -84,6 +84,7 @@ a {
 
 .brand {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.75rem;
   font-size: 1.15rem;
@@ -110,7 +111,9 @@ a {
 }
 
 .navigation__link {
+  display: inline-flex;
   min-height: 2.75rem;
+  align-items: center;
   padding: 0.7rem 0.9rem;
   border-radius: 0.85rem;
   color: #46516b;
@@ -125,7 +128,7 @@ a {
 }
 
 .page-container {
-  width: min(100% - 2rem, 76rem);
+  width: min(100% - clamp(1.25rem, 4vw, 2rem), 76rem);
   margin: 0 auto;
   padding: clamp(2.5rem, 7vw, 6rem) 0;
 }
@@ -430,6 +433,7 @@ button.select-card:hover,
 }
 
 .text-button {
+  min-height: 2.75rem;
   margin-top: 1rem;
   padding: 0.65rem 0;
   border: 0;
@@ -746,6 +750,37 @@ button.button:disabled {
   margin: 0;
 }
 
+.practice-feedback {
+  display: flex;
+  width: min(100%, 52rem);
+  min-height: 3.25rem;
+  margin: 0 auto 0.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid;
+  border-radius: 1rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.practice-feedback span {
+  font-size: 1.25rem;
+}
+
+.practice-feedback--positive {
+  border-color: #2e7a60;
+  color: #175941;
+  background: #dff8ec;
+}
+
+.practice-feedback--supportive {
+  border-color: #9a6820;
+  color: #704716;
+  background: #fff3cc;
+}
+
 .progress-track {
   width: min(100%, 52rem);
   height: 0.65rem;
@@ -1028,6 +1063,28 @@ button.button:disabled {
   min-width: 13rem;
 }
 
+@media (max-width: 1024px) {
+  .page-container {
+    padding-block: clamp(2rem, 5vw, 4rem);
+  }
+
+  .hero {
+    gap: 2rem;
+  }
+
+  .choice-grid--operations,
+  .choice-grid--levels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .question-card,
+  .session-toolbar,
+  .progress-track,
+  .practice-feedback {
+    width: min(100% - 0.75rem, 48rem);
+  }
+}
+
 @media (max-width: 760px) {
   .header__inner {
     min-height: auto;
@@ -1039,12 +1096,15 @@ button.button:disabled {
   .navigation {
     width: 100%;
     justify-content: center;
+    gap: 0.2rem;
   }
 
   .navigation__link {
+    flex: 1;
     min-height: 2.75rem;
     padding-inline: 0.7rem;
     font-size: 0.9rem;
+    justify-content: center;
   }
 
   .hero {
@@ -1057,8 +1117,18 @@ button.button:disabled {
   }
 
   .hero__art {
-    min-height: 22rem;
+    min-height: 17rem;
     order: -1;
+  }
+
+  .hero__mascot {
+    width: 9rem;
+    height: 9rem;
+    font-size: 3.75rem;
+  }
+
+  .math-orbit {
+    font-size: 0.95rem;
   }
 
   .feature-strip {
@@ -1104,10 +1174,54 @@ button.button:disabled {
 
   .question-card {
     min-height: 33rem;
+    border-radius: 1.5rem;
+    box-shadow: 7px 7px 0 #9fded2;
+  }
+
+  .question-card__face {
+    min-height: 29rem;
+    padding: clamp(1.25rem, 5vw, 2rem);
+  }
+
+  .session-toolbar {
+    align-items: flex-start;
+  }
+
+  .stats-section {
+    margin-block: 2rem;
   }
 }
 
 @media (max-width: 460px) {
+  .app-shell {
+    background:
+      radial-gradient(circle at 0 18%, rgb(255 221 98 / 26%) 0 5rem, transparent 5.1rem),
+      #f5f8ff;
+  }
+
+  .header__inner {
+    width: min(100% - 1rem, 76rem);
+  }
+
+  .brand__mark {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .navigation__link {
+    padding-inline: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .page-container {
+    width: min(100% - 1rem, 76rem);
+    padding-block: 1.5rem 2.5rem;
+  }
+
+  .page-heading h1 {
+    font-size: clamp(2.25rem, 12vw, 3.25rem);
+  }
+
   .choice-grid--operations,
   .choice-grid--levels,
   .segmented-control {
@@ -1121,6 +1235,59 @@ button.button:disabled {
   .answer-grid,
   .answer-recap {
     grid-template-columns: 1fr;
+  }
+
+  .answer-choice {
+    min-height: 4.75rem;
+  }
+
+  .question-card,
+  .session-toolbar,
+  .progress-track,
+  .practice-feedback {
+    width: calc(100% - 0.35rem);
+  }
+
+  .math-question {
+    font-size: clamp(2.75rem, 15vw, 4rem);
+  }
+
+  .session-toolbar {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .session-score {
+    margin-right: 0.25rem;
+  }
+
+  .stats-overview,
+  .stats-card-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-overview > div,
+  .performance-card,
+  .empty-state,
+  .recent-sessions article,
+  .pattern-list,
+  .missed-summary {
+    padding: 1rem;
+  }
+
+  .recent-sessions article,
+  .pattern-list article {
+    overflow-wrap: anywhere;
+  }
+
+  .fact-ranking {
+    padding-left: 1.35rem;
+  }
+
+  .fact-ranking span {
+    display: block;
+    margin: 0.2rem 0 0;
   }
 
   .question-card__meta {

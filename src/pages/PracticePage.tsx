@@ -29,6 +29,23 @@ import {
   updatePatternsForReviewAttempt,
 } from '../services/mistakeReviewService';
 
+const positiveMessages = [
+  'Nice work! Your math brain is getting stronger.',
+  'Great job! Keep that momentum going.',
+  'You got it! Ready for the next challenge?',
+];
+
+const supportiveMessages = [
+  'Good effort! This fact will come back for more practice.',
+  'Mistakes help your brain grow. Let’s try another one!',
+  'Keep going—you are learning with every answer.',
+];
+
+function feedbackMessage(correct: boolean): string {
+  const messages = correct ? positiveMessages : supportiveMessages;
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 function isConfiguration(value: unknown): value is PracticeConfiguration {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<PracticeConfiguration>;
@@ -146,6 +163,10 @@ function ActivePracticeSession({
       : nextRegularQuestion(configuration),
   );
   const [attempts, setAttempts] = useState<PracticeAttempt[]>([]);
+  const [feedback, setFeedback] = useState<{
+    kind: 'positive' | 'supportive';
+    message: string;
+  } | null>(null);
 
   const finishSession = (
     completedSession: PracticeSession,
@@ -189,6 +210,12 @@ function ActivePracticeSession({
 
     setAttempts(allAttempts);
     setSession(updated);
+    if (settings.positiveFeedback) {
+      setFeedback({
+        kind: selfReportedCorrect ? 'positive' : 'supportive',
+        message: feedbackMessage(selfReportedCorrect),
+      });
+    }
     saveAttempt(attempt);
     let updatedPatterns = patterns;
     if (question.source === 'mistake-review') {
@@ -269,6 +296,17 @@ function ActivePracticeSession({
           : ` of ${session.sessionLength}`}
         . {session.correct} right and {session.incorrect} to review.
       </p>
+      {feedback && (
+        <p
+          aria-label="Practice feedback"
+          aria-live="polite"
+          className={`practice-feedback practice-feedback--${feedback.kind}`}
+          role="status"
+        >
+          <span aria-hidden="true">{feedback.kind === 'positive' ? '★' : '♥'}</span>
+          {feedback.message}
+        </p>
+      )}
       <div className="session-toolbar">
         <div>
           <span className="session-score session-score--correct">

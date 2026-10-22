@@ -402,6 +402,7 @@ Implement Phase 15 only: mistake-review statistics, frequently missed facts, act
 
 - Review of the existing reset behavior found that it cleared attempts and sessions but would leave the newly displayed mistake patterns behind. Included mistake patterns in the same confirmed practice-history reset and added an assertion that they are removed.
 - No automated test failed in the final Phase 15 verification runs.
+
 ## 2026-10-22 — Phase 16: Accessibility foundations
 
 ### Prompt received
@@ -430,3 +431,34 @@ Implement Phase 16 only: full keyboard operation, keys 1–4 for answers, access
 
 - The first accessibility test run found three test defects: a rerender fixture changed display text without changing operands, a jsdom Tab simulation could not leave a programmatically focused `tabIndex=-1` heading, and a text query became ambiguous after live regions were added. Corrected the fixture and tested native tabbability/semantics without relying on jsdom's incomplete focus traversal.
 - The full check then found React's lint rule rejecting a synchronous state update inside the reduced-motion effect. Replaced the effect-managed state with `useSyncExternalStore`, preserving live media-query updates without a cascading render.
+
+## 2026-10-22 — Phase 17: Responsive design and polish
+
+### Prompt received
+
+Implement Phase 17 only: appealing and consistent design for ages 7–12, accessible visual feedback, large touch targets, excellent mobile and tablet layouts, responsive testing, todo updates, logging, and a commit.
+
+### Changes
+
+- Added static, politely announced positive and supportive feedback banners after self-reported answers, with several randomly selected age-appropriate messages and a distinct symbol in addition to color.
+- Connected feedback to the existing Positive feedback setting so families can disable the effect without disabling other practice features.
+- Set consistent 44px-or-larger navigation and text-button targets, preserved 56px primary actions, and tightened responsive card widths and spacing.
+- Added tablet-specific two-column setup and answer layouts, centered practice cards, and portrait/landscape spacing.
+- Added small-phone navigation, one-column answer/recap/statistic cards, narrower shadows and gutters, readable recent-history cards, and overflow-safe long text.
+- Added tests for positive feedback, supportive mistake feedback, and the disabled-feedback setting.
+
+### Verification
+
+- Targeted practice/statistics tests: passed 9 tests in 2 files.
+- Full `npm test -- --run`: passed 87 tests in 15 files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 54 transformed modules.
+- `git diff --check`: passed with no whitespace errors before the checklist/log update.
+- Browser phone checks: at requested 320×568, 375×667, and 390×844 viewports (effective content widths 291, 341, and 354px), home, setup, practice, feedback, and populated statistics had no horizontal overflow. Navigation measured 44px tall, primary actions 56px, setup controls 56–115px, and answer targets 76px.
+- Browser tablet checks: at 768×1024 portrait and 1024×768 landscape, the practice card stayed centered at 658px and 768px respectively, answers remained in two reachable columns with 84px targets, and populated statistics reflowed from four columns to two in portrait without overlap or horizontal overflow.
+- Browser console check: no warnings or errors were recorded during the responsive matrix.
+
+### Bugs and fixes
+
+- The first narrow-phone check found real horizontal overflow: the page forced a 320px minimum width while the embedded browser's effective content width was 291px. Removed the hard minimum, reloaded the exact view, and confirmed the document and viewport widths matched with no horizontal overflow.

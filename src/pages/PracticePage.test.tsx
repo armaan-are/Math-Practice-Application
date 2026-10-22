@@ -7,7 +7,9 @@ import {
   loadMistakePatterns,
   loadSessions,
   saveMistakePatterns,
+  saveSettings,
 } from '../services/storageService';
+import { DEFAULT_SETTINGS } from '../constants/defaults';
 import { PracticePage } from './PracticePage';
 import { PracticeSetupPage } from './PracticeSetupPage';
 
@@ -60,6 +62,35 @@ describe('PracticePage', () => {
       'Question 2 of 5. 1 right and 0 to review.',
     );
     expect(screen.getByRole('heading', { level: 1 }).textContent).not.toBe(firstQuestion);
+    expect(screen.getByLabelText('Practice feedback')).toHaveTextContent(
+      /Nice work|Great job|You got it/,
+    );
+  });
+
+  it('uses supportive language after a mistake and respects disabled feedback', async () => {
+    const user = userEvent.setup();
+    const first = renderPractice({
+      operations: ['addition'],
+      difficulty: 1,
+      sessionLength: 5,
+      reviewMode: 'regular',
+    });
+    await answerOnce(user, 'wrong');
+    expect(screen.getByLabelText('Practice feedback')).toHaveTextContent(
+      /Good effort|Mistakes help your brain grow|Keep going/,
+    );
+
+    first.unmount();
+    localStorage.clear();
+    saveSettings({ ...DEFAULT_SETTINGS, positiveFeedback: false });
+    renderPractice({
+      operations: ['addition'],
+      difficulty: 1,
+      sessionLength: 5,
+      reviewMode: 'regular',
+    });
+    await answerOnce(user, 'right');
+    expect(screen.queryByLabelText('Practice feedback')).not.toBeInTheDocument();
   });
 
   it('supports confirmed ending of continuous practice', async () => {
