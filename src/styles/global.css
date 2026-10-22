@@ -487,6 +487,204 @@ button.button:disabled {
   transform: none;
 }
 
+.question-card {
+  width: min(100%, 52rem);
+  min-height: 36rem;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 3px solid #17223b;
+  border-radius: 2rem;
+  background: #ffffff;
+  box-shadow: 12px 12px 0 #9fded2;
+  perspective: 1000px;
+}
+
+.question-card__meta {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 2px solid #e2e7f1;
+  color: #5c6880;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.question-card__face {
+  display: flex;
+  min-height: 32rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 6vw, 3rem);
+  backface-visibility: hidden;
+}
+
+.question-card--flipped:not(.question-card--no-motion) .question-card__face {
+  animation: reveal-card 360ms ease-out;
+}
+
+@keyframes reveal-card {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0) scale(1);
+  }
+}
+
+.math-question {
+  margin: 0 0 2rem;
+  font-size: clamp(3rem, 9vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.math-question--answer {
+  margin: 0.75rem 0 1.5rem;
+  font-size: clamp(2.6rem, 8vw, 4.75rem);
+}
+
+.answer-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+
+.answer-choice {
+  position: relative;
+  display: flex;
+  min-height: 5.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #cbd5e7;
+  border-radius: 1.1rem;
+  color: #17223b;
+  background: #f9fbff;
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.answer-choice:hover {
+  border-color: #5a56d6;
+  background: #f0efff;
+}
+
+.answer-choice--selected {
+  border-color: #3734a9;
+  background: #e8e7ff;
+  box-shadow: inset 0 0 0 1px #3734a9;
+}
+
+.answer-choice__number {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.65rem;
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #5c6880;
+  background: #e8edf6;
+  font-size: 0.75rem;
+}
+
+.answer-choice__status {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.45rem;
+  color: #3734a9;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-action {
+  min-width: 12rem;
+  margin-top: 1.5rem;
+}
+
+.answer-recap {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+
+.answer-recap p {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f0f4fb;
+  text-align: center;
+}
+
+.answer-recap span {
+  color: #5c6880;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.answer-recap strong {
+  font-size: 1.75rem;
+}
+
+.explanation {
+  margin: 1rem 0;
+  color: #46516b;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.self-report {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border: 0;
+  text-align: center;
+}
+
+.self-report legend {
+  width: 100%;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.self-report p {
+  margin: 0.35rem 0 0;
+  color: #5c6880;
+}
+
+.self-report .button-row {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.button--success {
+  background: #b8efd6;
+  box-shadow: 5px 5px 0 #2e7a60;
+}
+
+.button--supportive {
+  background: #ffe39a;
+  box-shadow: 5px 5px 0 #9a6820;
+}
+
 .setup-submit {
   min-width: 13rem;
 }
@@ -538,6 +736,10 @@ button.button:disabled {
   .button {
     width: 100%;
   }
+
+  .question-card {
+    min-height: 33rem;
+  }
 }
 
 @media (max-width: 460px) {
@@ -550,6 +752,17 @@ button.button:disabled {
   .select-card {
     min-height: 6rem;
   }
+
+  .answer-grid,
+  .answer-recap {
+    grid-template-columns: 1fr;
+  }
+
+  .question-card__meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -558,5 +771,6 @@ button.button:disabled {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

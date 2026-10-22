@@ -136,3 +136,29 @@ Implement Phase 5 only: exactly four unique shuffled answer choices per question
 ### Bugs and fixes
 
 - No behavior defect appeared during this phase. Prettier adjusted the new service formatting before the verified run.
+
+## 2026-10-21 — Phase 6: Question card interaction
+
+### Prompt received
+
+Implement Phase 6 only: choose an answer, flip the card, reveal the correct answer, self-report right or wrong, prevent double submissions, test, update, log, commit, and push.
+
+### Changes
+
+- Added accessible answer-choice buttons with selected and unselected states.
+- Added a question card front, disabled-until-ready flip action, animated answer reveal, correct/selected answer recap, and operation-specific explanation.
+- Added self-report buttons and a synchronous duplicate-submission guard.
+- Made animation and explanations independently disableable and respected reduced-motion preferences.
+- Used the question ID as a keyed state boundary so answer and flip state reset for each new question.
+
+### Verification
+
+- `npm run test`: passed 33 tests in 6 test files, including selection changes, reveal, reset, and double-click submission tests.
+- `npm run lint`: passed with zero warnings after the submitted-state fix.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 40 transformed modules.
+
+### Bugs and fixes
+
+- The initial component tests exposed leaked DOM between tests because Vitest globals were disabled and React Testing Library's implicit cleanup did not register. Added explicit `afterEach(cleanup)` in the shared test setup; all component tests then ran in isolation.
+- ESLint rejected reading a ref during render for disabled-button state. Kept the ref only as the synchronous double-submit guard and added React state for rendering the disabled state. The complete suite then passed.
