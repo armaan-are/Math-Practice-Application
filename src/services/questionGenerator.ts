@@ -1,6 +1,7 @@
 import type { DifficultyLevel, MathOperation, Question } from '../types';
 import { createId } from '../utils/ids';
 import { randomInteger } from '../utils/random';
+import { generateAnswerChoices, validateAnswerChoices } from './answerChoices';
 
 type QuestionWithoutChoices = Omit<Question, 'choices'>;
 
@@ -138,7 +139,10 @@ export function generateQuestion(
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const operation = operationList[randomInteger(0, operationList.length - 1)];
     const generated = generators[operation](difficulty);
-    if (validateQuestionArithmetic(generated)) return { ...generated, choices: [] };
+    if (validateQuestionArithmetic(generated)) {
+      const question = { ...generated, choices: generateAnswerChoices(generated) };
+      if (validateAnswerChoices(question)) return question;
+    }
   }
 
   throw new Error('A valid math question could not be generated.');

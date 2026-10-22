@@ -111,3 +111,28 @@ Implement Phase 4 only: accurate question generation for all four operations and
 ### Bugs and fixes
 
 - Runtime tests passed on the first generator implementation, but the TypeScript production build found that `Array.isArray` did not safely narrow the `MathOperation | readonly MathOperation[]` union for record indexing. Replaced it with an explicit string check and typed readonly operation list; the full suite then passed.
+
+## 2026-10-21 — Phase 5: Multiple-choice answers
+
+### Prompt received
+
+Implement Phase 5 only: exactly four unique shuffled answer choices per question, with one correct answer and three believable distractors; stress-test, update, log, commit, and push.
+
+### Changes
+
+- Added operation-specific distractors based on nearby sums, differences, multiplication facts, and division quotients/fact families.
+- Added a bounded random retry loop and deterministic nearby-number fallback so generation cannot loop forever.
+- Restricted choices to unique, nonnegative whole numbers and validated that the correct answer appears exactly once.
+- Integrated shuffled answer choices into the main question generator.
+- Added randomized stress tests across every operation and difficulty, including answers near zero and correct-answer position distribution.
+
+### Verification
+
+- `npm run test`: passed 30 tests in 5 test files. The choice suite exercised more than 5,000 generated questions.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 40 transformed modules.
+
+### Bugs and fixes
+
+- No behavior defect appeared during this phase. Prettier adjusted the new service formatting before the verified run.
