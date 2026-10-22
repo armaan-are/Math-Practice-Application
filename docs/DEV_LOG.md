@@ -314,3 +314,31 @@ Implement Phase 12 only: record and update mistake patterns whenever a student s
 ### Bugs and fixes
 
 - No test failure occurred during this phase. A final requirement review found that startup loading should be literal rather than deferred until the review feature; added startup validation and strengthened stored-pattern validation before the final verification run.
+
+## 2026-10-21 — Phase 13: Similar question generation
+
+### Prompt received
+
+Implement Phase 13 only: generate valid similar practice questions using nearby operands, appropriate reversed operands, and fact families; never reverse subtraction or division as equivalent; test, update the todo, log, and commit.
+
+### Changes
+
+- Added a similar-question generator that accepts a mistake pattern, chooses among valid nearby, reversed-operand, and fact-family strategies, and returns a complete multiple-choice question.
+- Added operation- and level-specific validation so every related question remains inside the original difficulty range.
+- Generated nearby division questions by changing a divisor or quotient and recalculating the dividend, guaranteeing a nonzero divisor and whole-number answer.
+- Limited operand reversal to addition and multiplication; subtraction and division retain their original operand meaning.
+- Added inverse addition/subtraction and multiplication/division fact families, omitting an inverse candidate when it would fall outside the selected difficulty.
+- Labeled generated questions as `mistake-review`, attached the originating mistake-pattern ID, excluded the exact original question, and supported excluding recently used question keys when alternatives exist.
+- Added unit and stress coverage for all operations, difficulty boundaries, strategy selection, valid answer choices, fact families, recent-question avoidance, and ordered noncommutative operations.
+
+### Verification
+
+- `npm run test`: passed 70 tests in 14 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 51 transformed modules.
+- `git diff --check`: passed with no whitespace errors.
+
+### Bugs and fixes
+
+- No functional failure occurred during this phase. A final coverage review added deterministic assertions that the main service selects reversal and fact-family strategies, rather than testing only the candidate helpers.
