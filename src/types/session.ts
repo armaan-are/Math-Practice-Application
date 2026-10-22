@@ -1,7 +1,19 @@
-import type { DifficultyLevel, MathOperation, QuestionSource } from './question';
+import type {
+  DifficultyLevel,
+  MathOperation,
+  Question,
+  QuestionSource,
+} from './question';
 
 export type SessionLength = 5 | 10 | 20 | 'continuous';
 export type ReviewMode = 'regular' | 'mistake-review';
+
+export interface PracticeConfiguration {
+  operations: MathOperation[];
+  difficulty: DifficultyLevel;
+  sessionLength: SessionLength;
+  reviewMode: ReviewMode;
+}
 
 export interface PracticeAttempt {
   id: string;
@@ -32,4 +44,13 @@ export interface PracticeSession {
   incorrect: number;
   mistakeReviewCount: number;
   isActive: boolean;
+}
+
+export interface ActivePracticeSession {
+  configuration: PracticeConfiguration;
+  session: PracticeSession;
+  question: Question;
+  attempts: PracticeAttempt[];
+  selectedAnswer: number | null;
+  isCardFlipped: boolean;
 }

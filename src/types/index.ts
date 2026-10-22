@@ -7,7 +7,9 @@ export type {
 } from './question';
 export type { AppSettings } from './settings';
 export type {
+  ActivePracticeSession,
   PracticeAttempt,
+  PracticeConfiguration,
   PracticeSession,
   ReviewMode,
   SessionLength,

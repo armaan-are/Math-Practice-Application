@@ -96,6 +96,23 @@ describe('QuestionCard', () => {
     expect(screen.getByRole('heading', { name: /8 multiplied by 8/i })).toHaveFocus();
   });
 
+  it('restores a saved selection and revealed card state', () => {
+    render(
+      <QuestionCard
+        initialFlipped
+        initialSelectedAnswer={48}
+        question={question}
+        currentQuestion={2}
+        totalQuestions={5}
+        onResult={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: /equals 56/i })).toBeInTheDocument();
+    expect(screen.getByText('Your answer').nextElementSibling).toHaveTextContent('48');
+    expect(screen.getByRole('button', { name: 'I got it wrong' })).toBeEnabled();
+  });
+
   it('uses native tabbable buttons and answer shortcuts 1 through 4', async () => {
     const user = userEvent.setup();
     render(

@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../constants/defaults';
-import type { PracticeAttempt, PracticeSession } from '../types';
+import type { ActivePracticeSession, PracticeAttempt, PracticeSession } from '../types';
 import {
   STORAGE_KEYS,
+  clearActiveSession,
   initializeStorage,
+  loadActiveSession,
   loadAttempts,
   loadMistakePatterns,
   loadSessions,
   loadSettings,
   saveAttempt,
+  saveActiveSession,
   saveSession,
   saveSettings,
 } from './storageService';
@@ -41,6 +44,33 @@ const session: PracticeSession = {
   mistakeReviewCount: 0,
   isActive: false,
 };
+const activeSession: ActivePracticeSession = {
+  configuration: {
+    operations: ['addition'],
+    difficulty: 1,
+    sessionLength: 5,
+    reviewMode: 'regular',
+  },
+  session: {
+    ...session,
+    completedAt: undefined,
+    isActive: true,
+  },
+  question: {
+    id: 'q2',
+    operation: 'addition',
+    firstOperand: 4,
+    secondOperand: 3,
+    displayText: '4 + 3 = ?',
+    correctAnswer: 7,
+    choices: [6, 7, 8, 9],
+    difficulty: 1,
+    source: 'regular',
+  },
+  attempts: [attempt],
+  selectedAnswer: 7,
+  isCardFlipped: true,
+};
 
 describe('storageService', () => {
   beforeEach(() => localStorage.clear());
@@ -60,6 +90,25 @@ describe('storageService', () => {
     expect(loadSettings()).toEqual(settings);
     expect(loadAttempts()).toEqual([attempt]);
     expect(loadSessions()).toEqual([session]);
+  });
+
+  it('validates, restores, and clears an active session snapshot', () => {
+    expect(saveActiveSession(activeSession)).toEqual({ ok: true });
+    expect(loadActiveSession()).toEqual(activeSession);
+    expect(clearActiveSession()).toEqual({ ok: true });
+    expect(loadActiveSession()).toBeNull();
+  });
+
+  it('rejects inconsistent active session snapshots and repairs corrupt data', () => {
+    expect(
+      saveActiveSession({
+        ...activeSession,
+        selectedAnswer: 999,
+      }),
+    ).toEqual({ ok: false, error: 'invalid' });
+    localStorage.setItem(STORAGE_KEYS.activeSession, '{bad');
+    expect(loadActiveSession()).toBeNull();
+    expect(localStorage.getItem(STORAGE_KEYS.activeSession)).toBeNull();
   });
 
   it('repairs only a corrupt category', () => {

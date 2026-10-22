@@ -9,6 +9,9 @@ interface QuestionCardProps {
   totalQuestions: number | 'continuous';
   animationsEnabled?: boolean;
   showExplanations?: boolean;
+  initialSelectedAnswer?: number | null;
+  initialFlipped?: boolean;
+  onProgressChange?: (selectedAnswer: number | null, isCardFlipped: boolean) => void;
   onResult: (selfReportedCorrect: boolean, selectedAnswer: number) => void;
 }
 
@@ -50,10 +53,15 @@ function QuestionCardContent({
   totalQuestions,
   animationsEnabled = true,
   showExplanations = true,
+  initialSelectedAnswer = null,
+  initialFlipped = false,
+  onProgressChange,
   onResult,
 }: QuestionCardProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(
+    initialSelectedAnswer,
+  );
+  const [isCardFlipped, setIsCardFlipped] = useState(initialFlipped);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const submitted = useRef(false);
   const questionHeading = useRef<HTMLHeadingElement>(null);
@@ -85,12 +93,25 @@ function QuestionCardContent({
       const index = Number(event.key) - 1;
       if (index < 0 || index > 3 || index >= question.choices.length) return;
       event.preventDefault();
-      setSelectedAnswer(question.choices[index]);
+      const answer = question.choices[index];
+      setSelectedAnswer(answer);
+      onProgressChange?.(answer, false);
     };
 
     window.addEventListener('keydown', handleNumberShortcut);
     return () => window.removeEventListener('keydown', handleNumberShortcut);
-  }, [isCardFlipped, isSubmitted, question.choices]);
+  }, [isCardFlipped, isSubmitted, onProgressChange, question.choices]);
+
+  const selectAnswer = (answer: number) => {
+    setSelectedAnswer(answer);
+    onProgressChange?.(answer, false);
+  };
+
+  const flipCard = () => {
+    if (selectedAnswer === null) return;
+    setIsCardFlipped(true);
+    onProgressChange?.(selectedAnswer, true);
+  };
 
   const submitResult = (selfReportedCorrect: boolean) => {
     if (submitted.current || selectedAnswer === null || !isCardFlipped) return;
@@ -144,7 +165,7 @@ function QuestionCardContent({
                 index={index}
                 isSelected={selectedAnswer === answer}
                 key={answer}
-                onSelect={setSelectedAnswer}
+                onSelect={selectAnswer}
               />
             ))}
           </div>
@@ -152,7 +173,7 @@ function QuestionCardContent({
             aria-expanded={false}
             className="button button--primary card-action"
             disabled={selectedAnswer === null}
-            onClick={() => setIsCardFlipped(true)}
+            onClick={flipCard}
             type="button"
           >
             Flip card

@@ -462,3 +462,37 @@ Implement Phase 17 only: appealing and consistent design for ages 7–12, access
 ### Bugs and fixes
 
 - The first narrow-phone check found real horizontal overflow: the page forced a 320px minimum width while the embedded browser's effective content width was 291px. Removed the hard minimum, reloaded the exact view, and confirmed the document and viewport widths matched with no horizontal overflow.
+
+## 2026-10-22 — Phase 18: Session recovery and navigation safety
+
+### Prompt received
+
+Implement Phase 18 only: recover an active session after refresh, prevent accidental lost progress during navigation, test setup/session/completion/refresh edge cases, update the todo and log, and commit.
+
+### Changes
+
+- Added a validated active-session snapshot containing the setup configuration, session counters, completed attempts, current question, selected answer, and card reveal state.
+- Saved the snapshot at session start and after every question, answer selection, reveal, and recorded result.
+- Restored the exact question and card state when `/practice/session` loads without transient router state.
+- Cleared the active snapshot before fixed-length, mistake-review, and continuous-session completion.
+- Added active-session protection for internal navigation links, browser history navigation, refreshes, and tab/window closure.
+- Kept the session active when leave confirmation is canceled; confirmed in-app navigation ends and stores the partial session before leaving.
+- Added strict active-snapshot validation so inconsistent counters, invalid questions, corrupt JSON, and invalid selected answers are rejected without affecting other stored categories.
+
+### Verification
+
+- Targeted storage, question-card, and practice-session tests: passed 25 tests in 3 files after fixes.
+- Full `npm test -- --run`: passed 94 tests in 15 files.
+- `npm run lint`: passed with zero warnings after removing an unused test import.
+- `npm run format:check`: passed after formatting the changed TypeScript files.
+- `npm run build`: passed; Vite generated the production bundle from 54 transformed modules.
+- `git diff --check`: passed with no whitespace errors before the checklist/log update.
+- Automated integration checks covered setup-to-session persistence, selected/revealed card recovery, canceled and confirmed navigation, active `beforeunload`, five-question completion, snapshot cleanup, and no warning after completion.
+- Browser check: started a five-question session, selected 9 for `1 + 10`, revealed the correct answer 11, refreshed `/practice/session`, and confirmed the same question, selection, reveal, counters, and self-report actions were restored. Confirmed navigation then ended the session; revisiting `/practice/session` redirected to setup because no active snapshot remained.
+- Browser console check: no warnings or errors were recorded during the recovery flow.
+
+### Bugs and fixes
+
+- The first recovery test incorrectly read the answer-choice shortcut number and answer as one number (for example, `1` and `11` became `111`). Changed the test to read the answer from the accessible label's value segment.
+- The completion test exposed a real race: a queued persistence effect could rewrite an active snapshot after completion cleared it. Added a synchronous session-ending guard before cleanup/navigation so no later effect can resurrect completed progress.
+- The first full check found an unused test import, and TypeScript then caught a possibly undefined selected answer in snapshot validation. Removed the import and added explicit numeric narrowing plus boolean validation for the reveal state.

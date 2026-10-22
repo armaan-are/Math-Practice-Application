@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PageContainer } from '../components/layout/PageContainer';
 import { QuestionCard } from '../components/practice/QuestionCard';
@@ -7,17 +7,21 @@ import {
   generateSimilarQuestion,
   similarQuestionKey,
 } from '../services/similarQuestionGenerator';
-import type { PracticeConfiguration } from './PracticeSetupPage';
 import type {
+  ActivePracticeSession,
   MistakePattern,
   PracticeAttempt,
+  PracticeConfiguration,
   PracticeSession,
   Question,
 } from '../types';
 import { createId } from '../utils/ids';
 import {
+  clearActiveSession,
+  loadActiveSession,
   loadMistakePatterns,
   loadSettings,
+  saveActiveSession,
   saveAttempt,
   saveMistakePatterns,
   saveSession,
@@ -107,9 +111,15 @@ function nextReviewQuestion(
 export function PracticePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const configuration = location.state as unknown;
+  const routeConfiguration = location.state as unknown;
+  const recoveredSession = isConfiguration(routeConfiguration)
+    ? null
+    : loadActiveSession();
+  const configuration = isConfiguration(routeConfiguration)
+    ? routeConfiguration
+    : recoveredSession?.configuration;
 
-  if (!isConfiguration(configuration)) {
+  if (!configuration) {
     return <Navigate to="/practice/setup" replace />;
   }
 
@@ -126,6 +136,7 @@ export function PracticePage() {
     <ActivePracticeSession
       configuration={configuration}
       initialPatterns={patterns}
+      recoveredSession={recoveredSession}
       onNavigate={navigate}
     />
   );
@@ -134,35 +145,49 @@ export function PracticePage() {
 interface ActivePracticeSessionProps {
   configuration: PracticeConfiguration;
   initialPatterns: MistakePattern[];
+  recoveredSession: ActivePracticeSession | null;
   onNavigate: ReturnType<typeof useNavigate>;
 }
 
 function ActivePracticeSession({
   configuration,
   initialPatterns,
+  recoveredSession,
   onNavigate,
 }: ActivePracticeSessionProps) {
   const [settings] = useState(loadSettings);
+  const sessionIsEnding = useRef(false);
   const [patterns, setPatterns] = useState(initialPatterns);
-  const [session, setSession] = useState<PracticeSession>(() => ({
-    id: createId('session'),
-    startedAt: new Date().toISOString(),
-    operations: configuration.operations,
-    difficulty: configuration.difficulty,
-    sessionLength: configuration.sessionLength,
-    reviewMode: configuration.reviewMode,
-    attempted: 0,
-    correct: 0,
-    incorrect: 0,
-    mistakeReviewCount: 0,
-    isActive: true,
-  }));
-  const [question, setQuestion] = useState<Question>(() =>
-    configuration.reviewMode === 'mistake-review'
-      ? nextReviewQuestion(configuration, initialPatterns, settings.masteryThreshold)
-      : nextRegularQuestion(configuration),
+  const [session, setSession] = useState<PracticeSession>(
+    () =>
+      recoveredSession?.session ?? {
+        id: createId('session'),
+        startedAt: new Date().toISOString(),
+        operations: configuration.operations,
+        difficulty: configuration.difficulty,
+        sessionLength: configuration.sessionLength,
+        reviewMode: configuration.reviewMode,
+        attempted: 0,
+        correct: 0,
+        incorrect: 0,
+        mistakeReviewCount: 0,
+        isActive: true,
+      },
   );
-  const [attempts, setAttempts] = useState<PracticeAttempt[]>([]);
+  const [question, setQuestion] = useState<Question>(
+    () =>
+      recoveredSession?.question ??
+      (configuration.reviewMode === 'mistake-review'
+        ? nextReviewQuestion(configuration, initialPatterns, settings.masteryThreshold)
+        : nextRegularQuestion(configuration)),
+  );
+  const [attempts, setAttempts] = useState<PracticeAttempt[]>(
+    recoveredSession?.attempts ?? [],
+  );
+  const [cardProgress, setCardProgress] = useState(() => ({
+    selectedAnswer: recoveredSession?.selectedAnswer ?? null,
+    isCardFlipped: recoveredSession?.isCardFlipped ?? false,
+  }));
   const [feedback, setFeedback] = useState<{
     kind: 'positive' | 'supportive';
     message: string;
@@ -172,12 +197,38 @@ function ActivePracticeSession({
     completedSession: PracticeSession,
     allAttempts: PracticeAttempt[],
   ) => {
+    sessionIsEnding.current = true;
+    clearActiveSession();
     saveSession(completedSession);
     onNavigate('/practice/summary', {
       replace: true,
       state: { session: completedSession, attempts: allAttempts },
     });
   };
+
+  const endSessionForNavigation = useCallback(() => {
+    sessionIsEnding.current = true;
+    clearActiveSession();
+    saveSession({
+      ...session,
+      completedAt: new Date().toISOString(),
+      isActive: false,
+    });
+  }, [session]);
+
+  useEffect(() => {
+    if (sessionIsEnding.current) return;
+    saveActiveSession({
+      configuration,
+      session,
+      question,
+      attempts,
+      selectedAnswer: cardProgress.selectedAnswer,
+      isCardFlipped: cardProgress.isCardFlipped,
+    });
+  }, [attempts, cardProgress, configuration, question, session]);
+
+  useActiveSessionNavigationGuard(endSessionForNavigation);
 
   const recordResult = (selfReportedCorrect: boolean, selectedAnswer: number) => {
     const attempt: PracticeAttempt = {
@@ -261,10 +312,12 @@ function ActivePracticeSession({
       setQuestion(
         nextReviewQuestion(configuration, remaining, settings.masteryThreshold, question),
       );
+      setCardProgress({ selectedAnswer: null, isCardFlipped: false });
       return;
     }
 
     setQuestion(nextRegularQuestion(configuration, question));
+    setCardProgress({ selectedAnswer: null, isCardFlipped: false });
   };
 
   const endContinuousSession = () => {
@@ -337,6 +390,11 @@ function ActivePracticeSession({
       <QuestionCard
         animationsEnabled={settings.cardAnimations}
         currentQuestion={session.attempted + 1}
+        initialFlipped={cardProgress.isCardFlipped}
+        initialSelectedAnswer={cardProgress.selectedAnswer}
+        onProgressChange={(selectedAnswer, isCardFlipped) =>
+          setCardProgress({ selectedAnswer, isCardFlipped })
+        }
         onResult={recordResult}
         question={question}
         showExplanations={settings.showExplanations}
@@ -344,4 +402,67 @@ function ActivePracticeSession({
       />
     </PageContainer>
   );
+}
+
+function useActiveSessionNavigationGuard(onConfirmedLeave: () => void) {
+  const restoringHistory = useRef(false);
+
+  useEffect(() => {
+    const message = 'End this practice session and leave the page?';
+    const confirmLeave = () => window.confirm(message);
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = true;
+    };
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        !(event.target instanceof Element)
+      ) {
+        return;
+      }
+      const link = event.target.closest<HTMLAnchorElement>('a[href]');
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+      const destination = new URL(link.href, window.location.href);
+      if (
+        destination.origin !== window.location.origin ||
+        `${destination.pathname}${destination.search}` ===
+          `${window.location.pathname}${window.location.search}`
+      ) {
+        return;
+      }
+      if (!confirmLeave()) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      onConfirmedLeave();
+    };
+    const handlePopState = () => {
+      if (restoringHistory.current) {
+        restoringHistory.current = false;
+        return;
+      }
+      if (confirmLeave()) {
+        onConfirmedLeave();
+      } else {
+        restoringHistory.current = true;
+        window.history.forward();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, [onConfirmedLeave]);
 }

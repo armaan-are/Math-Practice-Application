@@ -1,9 +1,11 @@
 import { DEFAULT_SETTINGS } from '../constants/defaults';
 import type {
+  ActivePracticeSession,
   AppSettings,
   MistakePattern,
   PracticeAttempt,
   PracticeSession,
+  Question,
 } from '../types';
 
 const SCHEMA_VERSION = 1;
@@ -124,6 +126,96 @@ function isSession(value: unknown): value is PracticeSession {
   );
 }
 
+function isQuestion(value: unknown): value is Question {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<Question>;
+  const choices = item.choices;
+  const hasValidShape =
+    typeof item.id === 'string' &&
+    isOperation(item.operation) &&
+    Number.isInteger(item.firstOperand) &&
+    Number.isInteger(item.secondOperand) &&
+    typeof item.displayText === 'string' &&
+    Number.isInteger(item.correctAnswer) &&
+    Array.isArray(choices) &&
+    choices.length === 4 &&
+    choices.every(Number.isInteger) &&
+    new Set(choices).size === 4 &&
+    choices.includes(item.correctAnswer as number) &&
+    [1, 2, 3, 4].includes(item.difficulty ?? 0) &&
+    (item.source === 'regular' || item.source === 'mistake-review') &&
+    (item.source === 'regular' || typeof item.mistakePatternId === 'string');
+
+  if (!hasValidShape) return false;
+  switch (item.operation) {
+    case 'addition':
+      return item.firstOperand! + item.secondOperand! === item.correctAnswer;
+    case 'subtraction':
+      return item.firstOperand! - item.secondOperand! === item.correctAnswer;
+    case 'multiplication':
+      return item.firstOperand! * item.secondOperand! === item.correctAnswer;
+    case 'division':
+      return (
+        item.secondOperand! > 0 &&
+        item.firstOperand! / item.secondOperand! === item.correctAnswer
+      );
+    default:
+      return false;
+  }
+}
+
+function isActivePracticeSession(value: unknown): value is ActivePracticeSession {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<ActivePracticeSession>;
+  const configuration = item.configuration;
+  if (!configuration || typeof configuration !== 'object') return false;
+  const validConfiguration =
+    Array.isArray(configuration.operations) &&
+    configuration.operations.length > 0 &&
+    configuration.operations.every(isOperation) &&
+    [1, 2, 3, 4].includes(configuration.difficulty ?? 0) &&
+    [5, 10, 20, 'continuous'].includes(configuration.sessionLength ?? 0) &&
+    (configuration.reviewMode === 'regular' ||
+      configuration.reviewMode === 'mistake-review');
+  if (
+    !validConfiguration ||
+    !isSession(item.session) ||
+    !item.session.isActive ||
+    !isQuestion(item.question) ||
+    !Array.isArray(item.attempts) ||
+    !item.attempts.every(isAttempt)
+  ) {
+    return false;
+  }
+
+  const countsMatch =
+    item.session.attempted === item.attempts.length &&
+    item.session.correct ===
+      item.attempts.filter((attempt) => attempt.selfReportedCorrect).length &&
+    item.session.incorrect ===
+      item.attempts.filter((attempt) => !attempt.selfReportedCorrect).length;
+  const sessionMatches =
+    item.session.difficulty === configuration.difficulty &&
+    item.session.sessionLength === configuration.sessionLength &&
+    item.session.reviewMode === configuration.reviewMode &&
+    item.question.difficulty === configuration.difficulty &&
+    configuration.operations.includes(item.question.operation) &&
+    item.attempts.every((attempt) => attempt.sessionId === item.session!.id);
+  const selectedAnswerIsValid =
+    item.selectedAnswer === null ||
+    (typeof item.selectedAnswer === 'number' &&
+      Number.isInteger(item.selectedAnswer) &&
+      item.question.choices.includes(item.selectedAnswer));
+
+  return (
+    countsMatch &&
+    sessionMatches &&
+    selectedAnswerIsValid &&
+    typeof item.isCardFlipped === 'boolean' &&
+    (!item.isCardFlipped || item.selectedAnswer !== null)
+  );
+}
+
 export function isMistakePattern(value: unknown): value is MistakePattern {
   if (!value || typeof value !== 'object') return false;
   const item = value as Partial<MistakePattern>;
@@ -225,6 +317,29 @@ export function saveSession(session: PracticeSession): StorageResult {
   if (!isSession(session)) return { ok: false, error: 'invalid' };
   const existing = loadSessions().filter((item) => item.id !== session.id);
   return write(STORAGE_KEYS.sessions, [session, ...existing].slice(0, 100));
+}
+
+export function loadActiveSession(): ActivePracticeSession | null {
+  initializeStorage();
+  return read(
+    STORAGE_KEYS.activeSession,
+    isActivePracticeSession,
+    null as ActivePracticeSession | null,
+  );
+}
+
+export function saveActiveSession(activeSession: ActivePracticeSession): StorageResult {
+  if (!isActivePracticeSession(activeSession)) {
+    return { ok: false, error: 'invalid' };
+  }
+  return write(STORAGE_KEYS.activeSession, activeSession);
+}
+
+export function clearActiveSession(): StorageResult {
+  const target = storage();
+  if (!target) return { ok: false, error: 'unavailable' };
+  target.removeItem(STORAGE_KEYS.activeSession);
+  return { ok: true };
 }
 
 export function loadMistakePatterns(): MistakePattern[] {

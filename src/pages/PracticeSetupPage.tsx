@@ -4,16 +4,15 @@ import { DifficultySelector } from '../components/setup/DifficultySelector';
 import { OperationSelector } from '../components/setup/OperationSelector';
 import { SessionLengthSelector } from '../components/setup/SessionLengthSelector';
 import { PageContainer } from '../components/layout/PageContainer';
-import type { DifficultyLevel, MathOperation, ReviewMode, SessionLength } from '../types';
+import type {
+  DifficultyLevel,
+  MathOperation,
+  PracticeConfiguration,
+  ReviewMode,
+  SessionLength,
+} from '../types';
 import { loadMistakePatterns, loadSettings } from '../services/storageService';
 import { activeMistakePatterns } from '../services/mistakeReviewService';
-
-export interface PracticeConfiguration {
-  operations: MathOperation[];
-  difficulty: DifficultyLevel;
-  sessionLength: SessionLength;
-  reviewMode: ReviewMode;
-}
 
 export function PracticeSetupPage() {
   const navigate = useNavigate();
