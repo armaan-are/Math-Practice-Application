@@ -685,6 +685,60 @@ button.button:disabled {
   box-shadow: 5px 5px 0 #9a6820;
 }
 
+.practice-page {
+  padding-top: 2rem;
+}
+
+.session-toolbar {
+  display: flex;
+  width: min(100%, 52rem);
+  margin: 0 auto 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.session-score {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.session-score--correct {
+  color: #175941;
+  background: #c9f3df;
+}
+
+.session-score--incorrect {
+  color: #704716;
+  background: #ffedb9;
+}
+
+.session-toolbar .text-button {
+  margin: 0;
+}
+
+.progress-track {
+  width: min(100%, 52rem);
+  height: 0.65rem;
+  margin: 0 auto 1rem;
+  overflow: hidden;
+  border: 1px solid #bdc8dc;
+  border-radius: 999px;
+  background: #e7ebf4;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #5a56d6;
+  transition: width 240ms ease;
+}
+
 .setup-submit {
   min-width: 13rem;
 }

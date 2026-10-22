@@ -162,3 +162,28 @@ Implement Phase 6 only: choose an answer, flip the card, reveal the correct answ
 
 - The initial component tests exposed leaked DOM between tests because Vitest globals were disabled and React Testing Library's implicit cleanup did not register. Added explicit `afterEach(cleanup)` in the shared test setup; all component tests then ran in isolation.
 - ESLint rejected reading a ref during render for disabled-button state. Kept the ref only as the synchronous double-submit guard and added React state for rendering the disabled state. The complete suite then passed.
+
+## 2026-10-21 — Phase 7: Practice sessions
+
+### Prompt received
+
+Implement Phase 7 only: complete session state, progress, transitions, continuous mode, correct and incorrect counts, accurate end behavior, tests, todo updates, logging, commit, and push.
+
+### Changes
+
+- Added validated setup-state loading and safe redirection for missing or invalid session configuration.
+- Added complete in-memory session and attempt records with IDs, timestamps, configuration, totals, and active state.
+- Added progress and score displays, automatic next-question generation, immediate-repeat avoidance, and keyed card reset.
+- Added fixed-length completion and confirmed continuous-session ending, both carrying an exact session snapshot and attempt list to the summary route.
+- Added session-page tests for invalid setup, result/progress updates, question advancement, and continuous ending.
+
+### Verification
+
+- `npm run test`: passed 36 tests in 7 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 47 transformed modules.
+
+### Bugs and fixes
+
+- No defect appeared in the verified Phase 7 run. The formatter normalized the new page and test before checks.
