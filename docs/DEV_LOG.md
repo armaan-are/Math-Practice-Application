@@ -372,3 +372,33 @@ Implement Phase 14 only: usable mistake-review sessions, pattern prioritization,
 
 - During incremental editing, inspection found a duplicate `state` property in the setup navigation call before tests were run. Removed the obsolete property so the complete review configuration is passed through one route-state object.
 - No automated test failed in the final Phase 14 verification runs.
+
+## 2026-10-21 — Phase 15: Advanced mistake statistics
+
+### Prompt received
+
+Implement Phase 15 only: mistake-review statistics, frequently missed facts, active versus mastered patterns, and related history; test empty and populated states, update the todo, log, and commit.
+
+### Changes
+
+- Added mistake-review calculations for active and mastered pattern counts, similar questions practiced, and correct review answers.
+- Added most-missed-operation detection with support for ties and deterministic fact sorting by incorrect count, recent miss, and stable ID.
+- Added a child-friendly statistics section with summary cards, most-missed operations, and a ranked list of frequently missed facts.
+- Added separate active and mastered pattern lists showing miss counts, configurable mastery progress, and the latest missed date.
+- Added newest-first related review history with the generated fact, date, level, and self-reported result.
+- Added clear empty states for users with no mistake patterns or similar-question history.
+- Updated the confirmed statistics reset to remove mistake patterns along with attempts, sessions, and aggregate statistics while continuing to preserve settings.
+- Added calculation and component coverage for empty data, populated data, ties, ordering, active/mastered separation, review history, and reset behavior.
+
+### Verification
+
+- `npm run test`: passed 82 tests in 15 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed.
+- `npm run build`: passed; Vite generated the production bundle from 53 transformed modules.
+- `git diff --check`: passed with no whitespace errors.
+
+### Bugs and fixes
+
+- Review of the existing reset behavior found that it cleared attempts and sessions but would leave the newly displayed mistake patterns behind. Included mistake patterns in the same confirmed practice-history reset and added an assertion that they are removed.
+- No automated test failed in the final Phase 15 verification runs.

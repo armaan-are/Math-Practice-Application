@@ -905,6 +905,76 @@ button.button:disabled {
   font-size: 0.85rem;
 }
 
+.missed-summary {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 2px solid #d9e1f0;
+  border-radius: 1.2rem;
+  background: #fff8df;
+}
+
+.missed-summary h3,
+.pattern-list h3 {
+  margin-top: 0;
+}
+
+.fact-ranking {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0 0;
+  padding-left: 1.75rem;
+}
+
+.fact-ranking li {
+  padding-left: 0.25rem;
+}
+
+.fact-ranking li::marker {
+  color: #5a56d6;
+  font-weight: 900;
+}
+
+.fact-ranking span {
+  margin-left: 0.6rem;
+  color: #5c6880;
+}
+
+.pattern-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pattern-list {
+  padding: 1.25rem;
+  border: 2px solid #d9e1f0;
+  border-radius: 1.2rem;
+  background: #fff;
+}
+
+.pattern-list article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid #d9e1f0;
+}
+
+.pattern-list article:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pattern-list article span {
+  color: #5c6880;
+  font-size: 0.85rem;
+}
+
+.review-history article > div:last-child strong {
+  color: #175941;
+}
+
 .settings-page {
   width: min(100%, 68rem);
   margin: 0 auto;
@@ -991,6 +1061,10 @@ button.button:disabled {
   .stats-overview,
   .stats-card-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pattern-columns {
+    grid-template-columns: 1fr;
   }
 
   .recent-sessions article {

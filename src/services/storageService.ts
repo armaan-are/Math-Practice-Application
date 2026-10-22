@@ -245,9 +245,12 @@ export function saveMistakePatterns(patterns: readonly MistakePattern[]): Storag
 export function clearPracticeHistory(): StorageResult {
   const target = storage();
   if (!target) return { ok: false, error: 'unavailable' };
-  [STORAGE_KEYS.attempts, STORAGE_KEYS.sessions, STORAGE_KEYS.statistics].forEach((key) =>
-    target.removeItem(key),
-  );
+  [
+    STORAGE_KEYS.attempts,
+    STORAGE_KEYS.sessions,
+    STORAGE_KEYS.statistics,
+    STORAGE_KEYS.mistakePatterns,
+  ].forEach((key) => target.removeItem(key));
   return { ok: true };
 }
 

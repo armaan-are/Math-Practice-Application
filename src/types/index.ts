@@ -12,4 +12,8 @@ export type {
   ReviewMode,
   SessionLength,
 } from './session';
-export type { AppStatistics, PerformanceStatistics } from './statistics';
+export type {
+  AppStatistics,
+  MistakeReviewStatistics,
+  PerformanceStatistics,
+} from './statistics';
