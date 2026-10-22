@@ -5,6 +5,7 @@ import { OperationSelector } from '../components/setup/OperationSelector';
 import { SessionLengthSelector } from '../components/setup/SessionLengthSelector';
 import { PageContainer } from '../components/layout/PageContainer';
 import type { DifficultyLevel, MathOperation, SessionLength } from '../types';
+import { loadSettings } from '../services/storageService';
 
 export interface PracticeConfiguration {
   operations: MathOperation[];
@@ -14,9 +15,16 @@ export interface PracticeConfiguration {
 
 export function PracticeSetupPage() {
   const navigate = useNavigate();
-  const [operations, setOperations] = useState<MathOperation[]>(['addition']);
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>(1);
-  const [sessionLength, setSessionLength] = useState<SessionLength>(10);
+  const [defaults] = useState(loadSettings);
+  const [operations, setOperations] = useState<MathOperation[]>(
+    defaults.defaultOperations,
+  );
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(
+    defaults.defaultDifficulty,
+  );
+  const [sessionLength, setSessionLength] = useState<SessionLength>(
+    defaults.defaultSessionLength,
+  );
   const [showValidation, setShowValidation] = useState(false);
 
   const startSession = () => {

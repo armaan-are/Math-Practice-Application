@@ -212,3 +212,29 @@ Implement Phase 8 only: accurate completion and summary totals, correct, incorre
 ### Bugs and fixes
 
 - No functional defect occurred in the verified Phase 8 run. The formatter normalized the new summary component before checks.
+
+## 2026-10-21 — Phase 9: Local data storage
+
+### Prompt received
+
+Implement Phase 9 only: robust browser localStorage for settings, attempts, and sessions, with validation and corrupt/unavailable-data handling; test refresh behavior, update, log, commit, and push.
+
+### Changes
+
+- Added a namespaced localStorage service with schema version 1 and a migration entry point.
+- Added validated read/write functions for settings, completed attempts, and session history.
+- Added category-specific corrupt-data recovery without clearing unrelated browser keys.
+- Added unavailable-storage and quota-capacity result handling, history de-duplication, and a 100-session detail limit.
+- Connected setup defaults, attempt recording, and completed-session persistence to the service.
+- Added persistence tests that write data and reload it through fresh service reads, matching refresh/restart storage behavior.
+
+### Verification
+
+- `npm run test`: passed 43 tests in 9 test files.
+- `npm run lint`: passed with zero warnings.
+- `npm run format:check`: passed after formatting the repaired service.
+- `npm run build`: passed; Vite generated the production bundle from 49 transformed modules.
+
+### Bugs and fixes
+
+- The first quota test revealed that the schema-version write in storage initialization could throw before the guarded data write. Wrapped initialization and propagated its typed failure result from settings saves; the real capacity path now returns `{ ok: false, error: 'capacity' }` without crashing.

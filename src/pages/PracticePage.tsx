@@ -6,6 +6,7 @@ import { generateQuestion } from '../services/questionGenerator';
 import type { PracticeConfiguration } from './PracticeSetupPage';
 import type { PracticeAttempt, PracticeSession, Question } from '../types';
 import { createId } from '../utils/ids';
+import { saveAttempt, saveSession } from '../services/storageService';
 
 function isConfiguration(value: unknown): value is PracticeConfiguration {
   if (!value || typeof value !== 'object') return false;
@@ -82,6 +83,7 @@ function ActivePracticeSession({
     completedSession: PracticeSession,
     allAttempts: PracticeAttempt[],
   ) => {
+    saveSession(completedSession);
     onNavigate('/practice/summary', {
       replace: true,
       state: { session: completedSession, attempts: allAttempts },
@@ -115,6 +117,7 @@ function ActivePracticeSession({
 
     setAttempts(allAttempts);
     setSession(updated);
+    saveAttempt(attempt);
 
     if (
       updated.sessionLength !== 'continuous' &&
